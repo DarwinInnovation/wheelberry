@@ -1,0 +1,20 @@
+{
+  "name": "wheelberry",
+  "private": true,
+  "description": "Wheelberry assistive technology platform — proxy server, shared client library, and device implementations",
+  "engines": {
+    "node": ">=24.10.0",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "build": "pnpm -r --workspace-concurrency=1 run build",
+    "typecheck": "pnpm -r run typecheck",
+    "clean": "pnpm -r exec rm -rf bin lib"
+  },
+  "devDependencies": {
+    "@tsconfig/node24": "^24.0.4",
+    "@types/node": "^24.10.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3"
+  }
+}

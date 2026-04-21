@@ -1,0 +1,31 @@
+doctype html
+html
+  head
+    title Wheelberry — Login
+    include includes/bootstrap_head.pug
+    style.
+      .login-container {
+        max-width: 400px;
+        margin: 100px auto;
+      }
+      .login-btn {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+  body
+    .container
+      .login-container
+        .card
+          .card-body.text-center
+            h3.card-title.mb-4 Wheelberry
+            p.text-muted Sign in to control your devices
+
+            if error
+              .alert.alert-danger Not authorized. Contact your administrator.
+
+            a.btn.btn-danger.login-btn(href="/auth/google")
+              | Sign in with Google
+            a.btn.btn-warning.login-btn(href="/auth/amazon")
+              | Sign in with Amazon
+
+    include includes/bootstrap_body.pug
