@@ -1,0 +1,15 @@
+{
+  endpoint: 'blanket',
+
+  users: {
+    'richard@miller-smith.com': {
+      uid: 'tplink_a1',
+      cfg: {
+        switchIP: '10.0.1.160',
+        timings: [
+          ['21:30', '23:30'],
+        ],
+      },
+    },
+  },
+}

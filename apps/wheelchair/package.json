@@ -1,0 +1,27 @@
+{
+  "name": "@wheelberry/wheelchair",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Wheelberry wheelchair device — sends seating-position commands.",
+  "main": "bin/index.js",
+  "engines": {
+    "node": ">=24.10.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "start": "node bin/index.js",
+    "dev": "tsx watch src/index.ts | pino-pretty -t",
+    "clean": "rm -rf bin"
+  },
+  "dependencies": {
+    "@wheelberry/proxy-client": "workspace:*",
+    "dotenv": "^17.3.1",
+    "pino": "^10.3.1",
+    "tsx": "^4.21.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14",
+    "pino-pretty": "^13.1.3"
+  }
+}

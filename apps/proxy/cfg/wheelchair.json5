@@ -1,0 +1,8 @@
+{
+  users: {
+    'richard@miller-smith.com': {
+      uid: 'abcd1122',
+      cfg: {},
+    },
+  },
+}
