@@ -43,7 +43,7 @@ pnpm --filter @wheelberry/portal dev            # React admin UI
 
 ## Conventions
 
-- Never commit directly to `master` — always branch and open a PR.
+- Never commit directly to `main` — always branch and open a PR.
 - Devices are deployed as pre-built tarballs produced via `pnpm deploy --filter <app> --prod <out>`.
 - Device config is pushed from the proxy via the Socket.IO `config` event — no local config files on devices.
 - Proxy config is in MongoDB (see `src/db/` and `src/scripts/admin-cli.ts`); JSON5 files are legacy / migration-only.
