@@ -35,5 +35,5 @@ pnpm --filter @wheelberry/wheelchair dev
 
 - TypeScript everywhere, ES modules (`nodenext`), strict.
 - `pino` v10 for logging (types are bundled — do not add `@types/pino`).
-- Never commit directly to `master` — branch and open a PR.
+- Never commit directly to `main` — branch and open a PR.
 - Workspace deps are linked via `workspace:*` — no GitHub URLs between internal packages.
