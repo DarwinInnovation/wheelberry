@@ -1,8 +1,0 @@
-{
-  users: {
-    'user@example.com': {
-      uid: 'abcd1122',
-      cfg: {},
-    },
-  },
-}
