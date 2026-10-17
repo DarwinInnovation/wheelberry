@@ -4,7 +4,7 @@ Review of `docs/spec.md` and `docs/mission-statement.md` as they stand on the `r
 
 The spec is in good shape. The mission is clear, the layering (one device model, thin channel adapters, a safety and policy engine in between) is the right shape for this problem, and the risk section is honest about the seating work being both the most valuable and the only dangerous part. Everything below is about internal contradictions and gaps, not about direction.
 
-The first item, movement semantics, is being worked separately in [movement-semantics.md](movement-semantics.md). This document records the whole review so the rest does not get lost.
+The first item, movement semantics, is worked separately in [movement-semantics.md](movement-semantics.md) and is now **decided** — contradictions 1, 2 and 4 below are resolved there and are kept here only for the record. This document records the whole review so the rest does not get lost.
 
 ## Contradictions to resolve
 
@@ -43,8 +43,8 @@ The first item, movement semantics, is being worked separately in [movement-sema
 
 Each decision constrains the next, so a single pass over everything would waste effort.
 
-1. **Movement semantics.** Settle F4, F9, F10 and the presets question. All of M2 depends on it. In progress in [movement-semantics.md](movement-semantics.md).
+1. ~~**Movement semantics.**~~ Decided 17 October 2026; see [movement-semantics.md](movement-semantics.md) for the six decisions and the replacement wording for F4, F9, F10 and four new requirements.
 2. **Home Assistant decision.** Close it as a decision record, including whether the safety path may traverse HA.
-3. **Channel capability matrix.** Which channels may touch which capability classes. Answers the AI and voice question in one table. Drafted as part of item 1.
+3. ~~**Channel capability matrix.**~~ Drafted and decided as part of item 1.
 4. **Requirements hygiene.** Number the NFRs, add the traceability matrix, make M1's gate measurable, add the simulator and internationalisation requirements.
 5. **Existing-work truth pass.** Verify the repository table against the actual repositories. Only this monorepo is visible from here, so the Mongo and email findings above are the only ones confirmed against code.
