@@ -13,6 +13,8 @@ apps/
   wheelchair/     Wheelchair seating-position device (stub transport)
 ```
 
+The project spec, architecture and milestones are in [docs/spec.md](docs/spec.md).
+
 Firmware lives in a separate repository (different toolchain, different release cadence).
 
 ## Quick start
