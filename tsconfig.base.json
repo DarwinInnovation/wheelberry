@@ -1,9 +1,0 @@
-{
-  "extends": "@tsconfig/node24/tsconfig.json",
-  "compilerOptions": {
-    "declaration": true,
-    "preserveConstEnums": true,
-    "removeComments": true,
-    "inlineSourceMap": true
-  }
-}
