@@ -4,7 +4,7 @@
 
 **This document is the authoritative list of requirements.** It consolidates F1–F14 and the non-functional table from [spec.md](spec.md) with everything the two decision records changed or added, numbers the non-functional requirements so they can be traced like the functional ones, makes the milestone gates measurable, and adds the requirements the review found missing.
 
-`spec.md` has not been edited. It still carries the superseded wording, and the reconciliation list at the end of this document says exactly what needs changing there. Until that is applied, read this document for requirements and `spec.md` for mission, users, scope, architecture and milestones.
+**The reconciliation list at the end of this document was applied to `spec.md` on 18 October 2026**, in full — every must-change and should-change row. `spec.md` no longer carries requirement text at all: it indexes the F-series by title and points here, so there is one authoritative copy rather than two. Read this document for requirements and `spec.md` for mission, users, scope, architecture and milestones. The only item not closed is the roadmap image, which needs regenerating.
 
 ## What this pass does
 
@@ -198,7 +198,7 @@ Safety and accessibility are pass/fail gates for every release. Targets marked *
 
 ## Milestone gates, made decidable
 
-Milestone names and gates are as drawn on the roadmap. The gate wording there is directional; what follows proposes what each gate means in practice, so that passing it is an observation rather than an opinion.
+Milestone names and gates are as drawn on the roadmap. The gate wording there is directional; what follows states what each gate means in practice, so that passing it is an observation rather than an opinion. **The M1 gate is provisionally adopted** (see below); the other four remain proposals.
 
 | Gate | As drawn | Proposed measurable form |
 | --- | --- | --- |
@@ -210,13 +210,17 @@ Milestone names and gates are as drawn on the roadmap. The gate wording there is
 
 ### The M1 gate in full
 
+**Status: provisionally adopted, 18 October 2026.** Richard adopted the thresholds below with one condition — **they are confirmed with the pilot user before M0 closes.** Until that conversation happens they are the working definition of the gate, not a negotiating position: work planned against M1 should assume them. What the pilot user may reasonably change is the task list, the number of attempts and the number of days, because those describe their life. What is not theirs to loosen is the meaning of *unaided* or the requirement that they score it themselves, since those are what make the gate a measurement.
+
+Confirming it means: the pilot user and their OT read this section, agree or amend the task list and the numbers, and the result is written down and dated. If the pilot user wants a weaker threshold, that is their call and it is recorded with their reason. If no pilot user is named in time, the gate stays provisional and M0 has not closed — M0's own gate requires the task list agreed and written down.
+
 "Pilot user runs daily tasks unaided" is the gate that decides whether the product works, so it needs to be unambiguous before M1 starts rather than interpreted after it ends.
 
 **The task list is agreed in M0, with the pilot user and their OT, and written down before any M1 code.** That ordering is the point: a task list written after the build measures what was built.
 
 Each task states its start state, the user's own input method, and what counts as done. Eight to twelve tasks, covering at minimum: turning a light on and off, setting heating, running a multi-device routine, checking a device's state, and recovering from a device being unavailable.
 
-Proposed thresholds:
+Thresholds, as adopted:
 
 - Every task completed **unaided** on at least 9 of 10 attempts.
 - Attempts spread over at least 10 separate days of ordinary use, not a single session.
@@ -249,7 +253,13 @@ Two things this matrix makes visible that the prose did not:
 
 ## Reconciling spec.md
 
-`spec.md` is now contradicted by three decision records. These are the changes it needs, in document order. Nothing here is applied — this is the list to work from.
+**Applied in full on 18 October 2026.** The list is kept as the record of what changed and why, since "the spec says X" questions are easier to answer against a list than against a diff. One row remains open: the roadmap image, below, which cannot be fixed by editing text.
+
+Three changes were made beyond the list, all of the same kind — the same contradiction in a place the list had not looked:
+
+- **Principle 3** claimed a new device "works everywhere at once", which is the channel-equivalence claim the capability matrix denies. Now says it *appears* everywhere, with one safety engine and per-channel command limits.
+- **The channels table** gained a note that the capability matrix is authoritative over it, so the two tables cannot drift apart again.
+- **Open questions** gained the six questions the review opened, including the three hardware questions, which were recorded only in the decision records and so were invisible to anyone reading the spec for what is undecided.
 
 ### Must change: contradicted by a decision
 
@@ -288,7 +298,7 @@ The roadmap caption for **M3** reads "Same permissions and safety on every chann
 
 Carried forward rather than answered here.
 
-- **Audit retention periods and the erasure answer.** F26 creates the requirement; the periods and the lawful basis are a decision, and the natural fifth workstream — it is the last of the five original contradictions still open.
+- **Audit retention periods and the erasure answer.** Now worked in [audit-retention.md](audit-retention.md), which proposes six record classes, a lawful basis per class, the retention periods, and revised wording for F26 and N-D3 plus F29–F31 and N-D5. Four decisions are with Richard; none of that wording is applied here yet.
 - **Which wheelchair control systems beyond LiNX**, and the other open questions in spec.md, which this pass does not touch.
 - **N-R2's recovery target**, to be set in M1.
 - **Whether the preconfigured hub runs HA on the same box**, an M1 packaging decision whose criterion is N-S2 measured in that configuration.
