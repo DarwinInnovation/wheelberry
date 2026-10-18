@@ -66,6 +66,7 @@ Together these say the clinical question for each axis is not "is the target saf
 - **P6** No unattended movement while any attended session holds a lease, and none within a cool-down of a manual stop.
 - **P7** Entrapment cannot be detected without sensing, so unattended movement is permitted only on axes where the clinician has accepted that residual risk explicitly. See the open hardware question about stall and current sensing.
 - **P8** Every unattended move is audited with its trigger, its envelope, and whether the cancel window elapsed unanswered.
+- **P9** Movement commanded by an actor outside Wheelberry — a third-party platform automation — requires a clinician opt-in **distinct from** the opt-in for Wheelberry's own routines, revocable by the user from any channel. Added by [home-assistant-decision.md](home-assistant-decision.md), which also notes that P4's daily budget and P5's cancel window become the primary controls in that case rather than belt-and-braces.
 
 F4's "Bedtime" therefore works as written: lights, heating and a recline, on a schedule. The recline announces itself first and is cancellable.
 
@@ -111,6 +112,7 @@ Capability classes:
 | Installer, service mode | Yes | Yes | Bench only, no occupant | Bench only | No | Pairing, firmware, diagnostics | Local |
 | Organisation admin | Audit only | No | No | No | No | Users and roles | n/a |
 | Routine or schedule engine | n/a | Yes | No | If the user accepts the prompt | Within envelope | No | n/a |
+| Home Assistant automation, via the Wheelberry integration | Yes | Yes | No | No | Within envelope, under P9 | No | n/a |
 
 The "only with a reachable local stop" cells are the honest form of the attendance rule. A cloud channel can start an attended preset when the user has some *other* local means of stopping it — their chair switches, the PWA, a carer in the room. If they do not, the same command is unattended-class and must meet the envelope instead. The channel does not decide this; the user's available stop does, and the hub knows which local channels are live.
 
