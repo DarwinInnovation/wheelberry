@@ -4,7 +4,7 @@ Draft for discussion. Agreed 11 October 2026; **reconciled with the four decisio
 
 This file began as a snapshot of the working [Claude Doc](https://claude.ai/code/artifact/7fb1cfd2-8184-444a-9efe-f79792d1fc75). It is no longer a snapshot: the reconciliation below was applied here and has not been applied there, so **this file is ahead of the Claude Doc.** Either port these changes back or retire the artifact as the working copy — two editable copies of the same spec is the problem this pass exists to fix.
 
-Requirements have moved. [requirements.md](requirements.md) is the authoritative register of F1–F28 and the numbered non-functional requirements; the sections below carry titles only. The reasoning behind each decision lives in [movement-semantics.md](movement-semantics.md), [home-assistant-decision.md](home-assistant-decision.md), [audit-retention.md](audit-retention.md) and [spec-review.md](spec-review.md).
+Requirements have moved. [requirements.md](requirements.md) is the authoritative register of F1–F32 and the numbered non-functional requirements; the sections below carry titles only. The reasoning behind each decision lives in [movement-semantics.md](movement-semantics.md), [home-assistant-decision.md](home-assistant-decision.md), [audit-retention.md](audit-retention.md) and [spec-review.md](spec-review.md).
 
 ## Mission and principles
 
@@ -137,9 +137,13 @@ Two things in the existing code need changing:
 | **F11** | Onboard a home: discover devices, connect backends, pair controllers | Revised |
 | **F12** | Users, roles and organisations across many homes | |
 | **F13** | Health monitoring, firmware updates, consented remote support | |
-| **F14** | Audit log of every action through a Wheelberry channel, stating what it does not cover | Revised |
+| **F14** | Audit log of every action through a Wheelberry channel, logged alike whoever acted, stating what it does not cover | Revised |
 | **F25** | Whole pairing lifecycle: key rotation, revocation, decommissioning, transfer to a new user | New |
-| **F26** | Audit and usage records classified, with a retention period and lawful basis for each class | New |
+| **F26** | Six record classes, each with a retention period, a lawful basis, and class, expiry and tier stamped at write time | Revised |
+| **F29** | Controller and processor determined per deployment shape; erasure requests answered or routed, never silently refused | New |
+| **F30** | Append-only, tamper-evident audit log with per-subject encryption, so erasure is key destruction | New |
+| **F31** | In-product view of everything held about the user, with who has read it; disclosure before seating is enabled | New |
+| **F32** | Read access to audit records enforced per class and per role, separately from permission to act; reads are audited | New |
 
 **Development and reach**
 
@@ -148,7 +152,7 @@ Two things in the existing code need changing:
 | **F27** | Device and controller simulator with fault injection, no hardware present | New |
 | **F28** | Every user-facing string externalised; locale per user | New |
 
-**Non-functional.** Numbered in the register in eight groups, so tests and issues can trace to them the way they trace to the F-series: **N-S** safety (7), **N-SEC** security (6), **N-A** accessibility (4), **N-P** performance (3), **N-R** reliability (4), **N-D** data protection (4), **N-REG** regulatory (2), **N-O** openness (2). Safety and accessibility are pass/fail gates for every release.
+**Non-functional.** Numbered in the register in eight groups, so tests and issues can trace to them the way they trace to the F-series: **N-S** safety (7), **N-SEC** security (6), **N-A** accessibility (4), **N-P** performance (3), **N-R** reliability (4), **N-D** data protection (5), **N-REG** regulatory (3), **N-O** openness (2) — thirty-four in all. Safety and accessibility are pass/fail gates for every release.
 
 Two of them are worth knowing from this document: **N-P1** is 150 ms input-to-command on the seating path, and **N-S1** is the 300 ms watchdog release. They were a single "under 300 ms" line here and are unrelated things — one is how responsive movement feels, the other is how fast outputs drop when commands stop.
 
@@ -182,7 +186,7 @@ Six milestones take Wheelberry from research to a multi-home pilot; the local M1
 
 Seating (M2) and voice and AI (M3) can run side by side once M1 passes its gate. No dates are set yet; they depend on team size and budget, which are open questions below. Milestone numbers M0–M5 are now the only release names used in this document; "MVP", "second release", "release 3" and "release 4" have been retired from the tables above.
 
-**The gates are stated measurably in [requirements.md](requirements.md)**, including the M1 gate in full — the task list agreed with the pilot user and their OT *in M0, before any M1 code*, and the thresholds for passing it. M1 also carries fourteen of the twenty-nine non-functional requirements, which is a larger M1 than "lights and heating in one home" suggests.
+**The gates are stated measurably in [requirements.md](requirements.md)**, including the M1 gate in full — the task list agreed with the pilot user and their OT *in M0, before any M1 code*, and the thresholds for passing it. M1 also carries sixteen of the thirty-four non-functional requirements, and four functional requirements about the shape of the audit log, which is a larger M1 than "lights and heating in one home" suggests.
 
 `images/roadmap.png` needs regenerating. Its M3 caption reads "Same permissions and safety on every channel": the same safety *engine*, yes, but not the same permissions — per-channel capability limits are the deliberate design, so the wording needs to be something like "One safety engine, per-channel capability limits". M3 also has no gate drawn; one is proposed in the register.
 
@@ -199,14 +203,15 @@ The biggest risk is the wheelchair seating work: it is the most valuable feature
 | Building for many disabilities at once dilutes the product | Pick one or two pilot users and design with them first |
 | Home Assistant is hard for non-technical installers | A preconfigured hub is **the supported path** for this user, not a mitigation to consider — it is now the one-box story, since there is no add-on build. Whether that box also runs Home Assistant is an M1 packaging decision, and its criterion is N-S2 measured in that configuration under recorder load |
 
-### Accepted hazards
+### Accepted hazards and accepted privacy risks
 
-Two hazards are accepted with controls rather than eliminated. They are recorded here, not only in the decision records, so that the independent safety reviewer at the M2 gate sees them rather than finds them.
+Three things are accepted with controls rather than eliminated — two safety hazards and one privacy risk. They are recorded here, not only in the decision records, so that the independent safety reviewer at the M2 gate and the DPIA reviewer see them declared rather than find them.
 
 | Accepted hazard | Why it is accepted | Controls |
 | --- | --- | --- |
 | **Prompt injection against an assistant with movement access** | AI movement was permitted deliberately (movement-semantics decision 4). An assistant can be argued into acting by whatever lands in its context, and no filter closes this | F18 and A1–A6: named presets only, separate clinician opt-in, unattended envelope unless a present human holds the stop, no retries, the originating utterance in the audit log |
 | **Entrapment that cannot be detected** | With no position sensing and no motor-current sensing, there is no signal that a limb or object is trapped | Every position in an axis's configured travel must be safe to occupy (F15), run-time caps, per-axis clinician acceptance of the residual risk (P7), and the open hardware question of whether motor current or stall detection can be added |
+| **A complete record of the user's own activity** | Every action is logged alike, by decision (audit retention, decision 1). For a user whose every interaction with their home passes through Wheelberry, that is a near-continuous record of when they wake, sleep, eat, go out and are alone — which an able-bodied person's home does not produce | Read access enforced per class and per role, with reads themselves audited and visible to the user (F32); the own-action record used only to show the user their own history and to diagnose faults, never for analytics, research or disclosure to an organisation; deleted in full and immediately on request (N-D3); and disclosed in the onboarding flow (F31) |
 
 ### Open questions for Richard
 
@@ -217,11 +222,11 @@ Two hazards are accepted with controls rather than eliminated. They are recorded
 - [ ] Is this an open source project, a product, or both? Which licence? (N-O1 wants this by M0)
 - [ ] Who is the team, and is there a budget or deadline that milestones should fit?
 - [ ] Who runs the cloud side, and is UK or EU hosting a requirement?
-- [ ] Are care organisations managing many homes an early customer, or later?
+- [ ] Are care organisations managing many homes an early customer, or later? Either way, N-REG3 now gates the first organisational sale.
 
 ### Opened by the review
 
-- [ ] **Audit retention periods and the erasure answer** — F26 creates the slot; the periods and the lawful basis are a decision. Being worked now in [audit-retention.md](audit-retention.md).
+- [x] **Audit retention periods and the erasure answer** — decided 18 October 2026; see [audit-retention.md](audit-retention.md). Six record classes, every action logged alike, Article 9(2)(i) with 9(2)(f) for the tail, retention differentiated by tier, and a data-protection specialist engaged before the first organisational sale (N-REG3).
 - [ ] **Does the dongle or LiNX path expose motor current or stall detection?** With no position sensing, current is the only entrapment signal there could be. Cheap to add now, expensive later.
 - [ ] **Per axis, is the full configured travel safe to occupy unattended, indefinitely?** A clinician and installer judgement, once per user, and a precondition for F17 on that axis (P2).
 - [ ] **Can LiNX range limits be programmed per user at installation?** If not, unattended movement is all-or-nothing per axis.

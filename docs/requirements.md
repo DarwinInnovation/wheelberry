@@ -2,7 +2,9 @@
 
 18 October 2026. Fourth workstream out of [spec-review.md](spec-review.md), following [movement-semantics.md](movement-semantics.md) and [home-assistant-decision.md](home-assistant-decision.md).
 
-**This document is the authoritative list of requirements.** It consolidates F1–F14 and the non-functional table from [spec.md](spec.md) with everything the two decision records changed or added, numbers the non-functional requirements so they can be traced like the functional ones, makes the milestone gates measurable, and adds the requirements the review found missing.
+**This document is the authoritative list of requirements.** It consolidates F1–F14 and the non-functional table from [spec.md](spec.md) with everything the decision records changed or added, numbers the non-functional requirements so they can be traced like the functional ones, makes the milestone gates measurable, and adds the requirements the review found missing.
+
+**The audit retention decisions were applied on 18 October 2026** — F14 and F26 revised, F29–F32 added, N-D1 and N-D3 revised, N-D5 and N-REG3 added, N-REG2 extended. The reasoning is in [audit-retention.md](audit-retention.md).
 
 **The reconciliation list at the end of this document was applied to `spec.md` on 18 October 2026**, in full — every must-change and should-change row. `spec.md` no longer carries requirement text at all: it indexes the F-series by title and points here, so there is one authoritative copy rather than two. Read this document for requirements and `spec.md` for mission, users, scope, architecture and milestones. The only item not closed is the roadmap image, which needs regenerating.
 
@@ -13,13 +15,13 @@ Requirements hygiene sounds like clerical work and mostly is. But four substanti
 1. **F8 promises something the hub cannot do.** It says clinician-set limits on *range*, *speed* and *allowed positions* are enforced. With no position sensing (movement-semantics decision 1), the hub can enforce none of those. Revised below, and flagged because a clinician reading F8 as written would reasonably assume a protection that does not exist.
 2. **F2 and the M3 gate both say every channel is equivalent.** The channel capability matrix says the opposite, deliberately. Both need rewording, and the roadmap image needs regenerating.
 3. **The spec's advice to use Bedberry's angle sensing for presets is now wrong** — it was written before position sensing was deferred, and it is exactly the assumption F15 exists to prevent.
-4. **Audit retention has no requirement at all**, which leaves contradiction 5 (audit log against GDPR erasure) with nowhere to land. F26 creates the slot; the retention periods themselves are a decision for a later workstream, not something to invent here.
+4. **Audit retention had no requirement at all**, which left contradiction 5 (audit log against GDPR erasure) with nowhere to land. F26 created the slot, and the retention workstream has since filled it: six record classes, a lawful basis each, and the decision that every action is logged alike. The consequence of that last one is F32 — with the log complete, *reading* it becomes the thing that needs controlling, and permission to read someone's home history had been the same permission as acting on their devices.
 
 ## Numbering
 
 | Prefix | Area | Note |
 | --- | --- | --- |
-| `F` | Functional | F1–F14 keep their original numbers; F15–F28 are new |
+| `F` | Functional | F1–F14 keep their original numbers; F15–F32 are new |
 | `P` | Preconditions for unattended movement | Qualify F17; set in movement-semantics, P9 revised by the HA decision |
 | `A` | Conditions on AI assistants | Qualify F18 |
 | `N-S` | Non-functional: safety | N-S1–N-S4 set in movement-semantics |
@@ -27,11 +29,11 @@ Requirements hygiene sounds like clerical work and mostly is. But four substanti
 | `N-A` | Non-functional: accessibility | |
 | `N-P` | Non-functional: performance | N-P1–N-P3 set in movement-semantics |
 | `N-R` | Non-functional: reliability | N-R1–N-R2 set in the HA decision |
-| `N-D` | Non-functional: data protection and privacy | `N-P` was already taken by performance |
-| `N-REG` | Non-functional: regulatory | |
+| `N-D` | Non-functional: data protection and privacy | `N-P` was already taken by performance. N-D5 set in audit-retention |
+| `N-REG` | Non-functional: regulatory | N-REG3 set in audit-retention |
 | `N-O` | Non-functional: openness | |
 
-Status column: **Original** = unchanged from spec.md. **Revised** = changed by a decision record or by this pass. **New** = added by a decision record or by this pass.
+Status column: **Original** = unchanged from spec.md. **Revised** = changed by a decision record or by a hygiene pass. **New** = added the same way. "This pass" means the requirements hygiene pass of 18 October 2026; later changes name their decision record instead.
 
 ## Functional requirements
 
@@ -82,9 +84,13 @@ Status column: **Original** = unchanged from spec.md. **Revised** = changed by a
 | **F11** | Onboard a home: discover devices, connect home-device backends, pair Wheelberry controllers. | Revised (backends generalised, this pass) |
 | **F12** | Manage users, roles and organisations across many homes. | Original |
 | **F13** | Monitor hub and controller health, push firmware updates, and offer remote support only with the end user's consent. | Original |
-| **F14** | Keep an audit log of every action taken through a Wheelberry channel: who, which channel, which device, result. Where a device is reached through a third-party platform, record that the command was issued and its result, and state in the log that actions taken directly in that platform are outside Wheelberry's record. | Revised (HA decision) |
+| **F14** | Keep an audit log of every action taken through a Wheelberry channel: who, which channel, which device, result. **Every action is logged alike**, including a user's own actions on their own devices: the log is not cut by who acted, and the record of a user's own activity is as complete as the record of an action taken on them (decision, 18 October 2026). Where a device is reached through a third-party platform, record that the command was issued and its result, and state in the log that actions taken directly in that platform are outside Wheelberry's record. | **Revised (audit retention)** |
 | **F25** | Support the whole pairing lifecycle, not only the first pairing: rotate per-device keys on a stated schedule and on demand; revoke a controller's credentials from the portal; decommission a device so that its historical audit records survive but it can no longer act; and transfer a chair or bed to a new user with a documented procedure that clears the previous user's configuration and personal data. Secondhand powered chairs are common and this is a foreseeable state, not an edge case. | **New, this pass** |
-| **F26** | Classify audit and usage records, and state a retention period and a lawful basis for each class. At minimum, distinguish the safety-relevant record of movement (who commanded what, when, and how it ended) from the usage record of non-movement devices. An erasure request under N-D3 must be answerable without destroying the safety record, by anonymisation or by a stated lawful basis for retention, and the answer must be written down before M1 ships an audit log. | **New, this pass** |
+| **F26** | Classify every audit and usage record into one of the six classes C1–C6 defined in audit-retention, and record for each class a retention period, an Article 6 lawful basis and, where applicable, an Article 9 condition. Store classes so that deletion by class and by data subject is a tested operation. Stamp each record with its class, its retention expiry and, for C1 and C2, its retention tier at write time, and enforce expiry automatically; a record with no tier is reported as an exception rather than given a default. Never rely on consent as the basis for any record that must survive the withdrawal of that consent. The policy is written down before M1 ships an audit log. | **Revised (audit retention)** |
+| **F29** | Determine the controller and processor relationship for each deployment shape, and implement erasure and subject-access handling accordingly: answer directly where Wheelberry is the controller, and route the request to the controller and tell the requester it has been routed where it is not. A request is never silently refused. | **New (audit retention)** |
+| **F30** | Make the audit log append-only and tamper-evident, with per-record or per-subject encryption, so that erasure can be performed by destroying a key without breaking verifiability. | **New (audit retention)** |
+| **F31** | Provide the user with an in-product view of every record held about them, by class, with its retention period, who else has read it, and whether it can be deleted on request. Disclose both the non-deletable safety record and the completeness of their own-action record before powered seating is enabled, in the onboarding flow rather than only in a policy document. | **New (audit retention)** |
+| **F32** | Enforce read access to audit records per class and per role, separately from permission to act on a device: a user reads everything about themselves; a carer or family member reads their own actions and the sessions they conducted; a clinician reads C1 and C2 for the user in their care; an organisation admin reads C3 and C4 for their staff and C1 for a named incident under investigation, but never C5; Darwin support reads only within a consented F13 session. Record every read of a C1, C2, C3 or C5 record as a C4 event visible to the data subject. C5 is used only to show the user their own history and to diagnose faults — never for analytics, research, or disclosure to an organisation. | **New (audit retention)** |
 
 ### Development and reach
 
@@ -177,17 +183,19 @@ Safety and accessibility are pass/fail gates for every release. Targets marked *
 
 | ID | Requirement | Target |
 | --- | --- | --- |
-| **N-D1** | Usage and seating data are treated as health data under UK GDPR, with data minimisation applied at collection, not at export | Pass/fail |
+| **N-D1** | Usage and seating data are treated as health data under UK GDPR. Minimisation applies to the fields held in each record and to who may read them (F32), not to which actions are recorded: every action is recorded alike by decision, 18 October 2026 | Pass/fail |
 | **N-D2** | Personal data stored in the UK or EU | Pass/fail |
-| **N-D3** | The user can export and delete their data, subject to the retention classes of F26 | Pass/fail |
+| **N-D3** | The user can export and delete their data, subject to the retention classes of F26. C5 and C6 are deleted in full and immediately on request, and the user may set a shorter retention for C5. C1 and C2 are retained under their stated lawful basis, with the refusal explained in plain, accessible language naming the basis and the period. Pseudonymisation is never described to a user as erasure | Pass/fail |
 | **N-D4** | Seating state exposed into a third-party platform is health-adjacent data outside Wheelberry's access control, and is assessed in the DPIA. If the DPIA objects, expose a coarse status rather than withdrawing read access | DPIA conclusion recorded |
+| **N-D5** | Retention of C1 and C2 differentiates by retention tier — standard, minor, extended — where limitation periods differ. The store holds the tier and who set it, never a capacity assessment and never a date of birth. Tiers are reviewed with the clinical configuration, shortened only by a recorded decision, and the policy is reviewed whenever N-REG1's conclusion changes | Pass/fail, with the tier required before powered seating is enabled |
 
 ### Regulatory (N-REG)
 
 | ID | Requirement | Target |
 | --- | --- | --- |
 | **N-REG1** | Assess whether the seating controller is a medical device or accessory under UK MDR and EU MDR, and plan for it if so | M0 deliverable, before hardware design is fixed |
-| **N-REG2** | Complete a DPIA covering health-grade data and vulnerable users, including N-D4 and the audit classes of F26 | M0 deliverable |
+| **N-REG2** | Complete a DPIA covering health-grade data and vulnerable users, including N-D4, the six audit classes of F26, the per-deployment controller analysis, the capacity-differentiated retention of C1 and C2, the completeness of C5 as an accepted privacy risk, and the conclusion that pseudonymising the movement record is not anonymisation. Name which of its conclusions are provisional pending N-REG3 | M0 deliverable |
+| **N-REG3** | A data-protection specialist reviews the record classes, lawful bases, retention tiers and read-access model, and the conclusions are recorded. The brief is the eight questions in audit-retention | Before any organisational deployment or sale (M4 scope) |
 
 ### Openness (N-O)
 
@@ -206,7 +214,9 @@ Milestone names and gates are as drawn on the roadmap. The gate wording there is
 | M1 → M2/M3 | Pilot user runs daily tasks unaided | See below |
 | M2 → M4 | Safety review signed off | Reviewer independent of the development team; reviews the risk file, the hazard analysis including the two accepted hazards (prompt injection, entrapment without sensing), P1–P9 as implemented, and N-S1, N-S2 and N-S7 **measured on hardware under load**, not calculated |
 | M3 → M4 | *(none drawn)* | Proposed: the channel capability matrix is implemented and tested per channel, including that a refused action is refused with a legible reason (F2, F21) |
-| M4 → M5 | Penetration test and accessibility audit passed | N-SEC6 with no unresolved high or critical findings; N-A1 with no blocking issues on the core journeys; N-A2 satisfied with real users across every input method in scope |
+| M4 → M5 | Penetration test and accessibility audit passed | N-SEC6 with no unresolved high or critical findings; N-A1 with no blocking issues on the core journeys; N-A2 satisfied with real users across every input method in scope; **N-REG3 complete** |
+
+**N-REG3 is also a condition on anything organisational inside M4**, not only on the M5 transition: no organisational pilot, procurement response or sale proceeds before the specialist review is recorded. That is where decision 4 placed it — the specialist comes later than this document recommended, so the point at which "later" has run out needs to be a gate rather than an intention.
 
 ### The M1 gate in full
 
@@ -239,16 +249,16 @@ Where each requirement first has to hold. Later milestones extend many of them; 
 
 | Milestone | Functional | Non-functional |
 | --- | --- | --- |
-| **M0** Foundations | F26 (policy written), F27 | N-S6, N-REG1, N-REG2, N-O1 (licence) |
-| **M1** Local MVP | F1, F2, F3, F4 (non-movement), F5, F6, F7, F11, F14, F19, F20, F21, F22, F24, F28 | N-SEC1, N-SEC3, N-SEC4, N-A1, N-A2, N-A3, N-A4, N-P2, N-P3, N-R1, N-R2, N-R3, N-R4, N-D1, N-D4, N-O2 |
-| **M2** Seating via the dongle | F4 (movement), F8, F9, F10 (safety and local stop), F15, F16, F17, F23, F25 (pairing and rotation) | N-S1, N-S2, N-S3, N-S4, N-S5, N-S7, N-SEC2, N-SEC5, N-P1 |
+| **M0** Foundations | F26 (policy written), F27, F29 (controller analysis) | N-S6, N-REG1, N-REG2, N-O1 (licence) |
+| **M1** Local MVP | F1, F2, F3, F4 (non-movement), F5, F6, F7, F11, F14, F19, F20, F21, F22, F24, F26 (class, expiry and tier stamped at write time), F28, F30, F31 (own-action completeness disclosed), F32 | N-SEC1, N-SEC3, N-SEC4, N-A1, N-A2, N-A3, N-A4, N-P2, N-P3, N-R1, N-R2, N-R3, N-R4, N-D1, N-D4, N-O2 |
+| **M2** Seating via the dongle | F4 (movement), F8, F9, F10 (safety and local stop), F15, F16, F17, F23, F25 (pairing and rotation), F31 (safety record disclosed before seating is enabled, and the record view) | N-S1, N-S2, N-S3, N-S4, N-S5, N-S7, N-SEC2, N-SEC5, N-P1, N-D5 |
 | **M3** Voice and AI | F10 (convenience stop), F18 | — |
-| **M4** Phone app, remote access and portal | F12, F13, F25 (decommission and transfer at fleet scale) | N-SEC6, N-D2, N-D3 |
+| **M4** Phone app, remote access and portal | F12, F13, F25 (decommission and transfer at fleet scale), F29 (erasure requests routed) | N-SEC6, N-D2, N-D3, N-REG3 |
 | **M5** Multi-home pilot | — | N-O1 (public release) |
 
 Two things this matrix makes visible that the prose did not:
 
-- **M1 carries almost all of the non-functional load.** Fourteen of the twenty-nine non-functional requirements must hold before the first pilot user does anything, which is a larger M1 than "lights and heating in one home" suggests.
+- **M1 carries almost all of the non-functional load.** Sixteen of the thirty-four non-functional requirements must hold before the first pilot user does anything, which is a larger M1 than "lights and heating in one home" suggests. The retention work added four functional requirements to M1 as well, all of them properties of the audit log that cannot be retrofitted once records exist.
 - **M3 adds no non-functional requirements and no gate of its own.** Voice and AI arrive carrying only F18 and the convenience stop, which is a thin gate for the channel class most able to surprise a user.
 
 ## Reconciling spec.md
@@ -298,7 +308,7 @@ The roadmap caption for **M3** reads "Same permissions and safety on every chann
 
 Carried forward rather than answered here.
 
-- **Audit retention periods and the erasure answer.** Now worked in [audit-retention.md](audit-retention.md), which proposes six record classes, a lawful basis per class, the retention periods, and revised wording for F26 and N-D3 plus F29–F31 and N-D5. Four decisions are with Richard; none of that wording is applied here yet.
+- ~~**Audit retention periods and the erasure answer.**~~ Decided 18 October 2026 and applied above; see [audit-retention.md](audit-retention.md) for the six record classes, the lawful basis per class, the retention periods and the four decisions. What remains open from it: **the eight specialist questions**, deferred by decision 4 to before the first organisational sale (N-REG3), and whether a user may shorten their own C5 retention, which is my reading of decision 1 rather than an instruction.
 - **Which wheelchair control systems beyond LiNX**, and the other open questions in spec.md, which this pass does not touch.
 - **N-R2's recovery target**, to be set in M1.
 - **Whether the preconfigured hub runs HA on the same box**, an M1 packaging decision whose criterion is N-S2 measured in that configuration.
