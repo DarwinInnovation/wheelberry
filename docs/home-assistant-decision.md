@@ -1,6 +1,6 @@
 # Home Assistant: backend, not platform
 
-Second revision, 18 October 2026. The first revision proposed options; Richard decided all five questions, and this revision implements those decisions rather than re-arguing them. Second workstream out of [spec-review.md](spec-review.md), following [movement-semantics.md](movement-semantics.md).
+Third revision, 18 October 2026. The first revision proposed options; Richard decided all five questions; the second revision implemented them and surfaced one consequence he then acted on, reversing decision 4. This revision is written to the decisions as they now stand. Second workstream out of [spec-review.md](spec-review.md), following [movement-semantics.md](movement-semantics.md).
 
 The spec contradicted itself on Home Assistant: the architecture section states *"Key decision: build on Home Assistant, not beside it"*, while the open questions still ask *"Should Wheelberry sit on top of Home Assistant (recommended) or stand alone?"*. That contradiction is now closed.
 
@@ -11,10 +11,11 @@ The spec contradicted itself on Home Assistant: the architecture section states 
 | 1 | Does the hub run inside Home Assistant, or as its own thing? | **Standalone only.** No add-on is shipped |
 | 2 | May a safety-relevant path ever traverse Home Assistant? | **Never.** HA is a home-device backend only |
 | 3 | Must Wheelberry work with no Home Assistant present? | **Yes** — and Wheelberry may implement some home-control APIs directly, lighting first |
-| 4 | What may HA automations do with Wheelberry devices? | **Full capability, including movement** |
+| 4 | What may HA automations do with Wheelberry devices? | **Read and non-movement control. No movement, in any mode** |
 | 5 | Is Home Assistant installer-facing only? | **No.** Users and carers may hold HA logins |
+| 6 | May the preconfigured hub run HA on the same box? | **Decide in M1**, as a packaging question |
 
-Decisions 4 and 5 reverse recommendations in the first revision, and decision 3 adds a direction the first revision did not consider. Decisions 1 and 2 go at least as far as it recommended. The rest of this document is written to the decisions as taken.
+Decision 4 moved twice. The first revision recommended non-movement only; Richard's first answer was full capability including movement; and when the second revision set out what that meant alongside decision 5, he reversed it to non-movement only. Decision 3 adds a direction the first revision did not consider. Decisions 1 and 2 go at least as far as it recommended. The rest of this document is written to the decisions as they now stand.
 
 ## The distinction that still does the work
 
@@ -40,7 +41,9 @@ Note that losing the HA connection for 10–60 seconds during an HA Core restart
 
 It loses the person who already runs HA OS and wants one box. The spec's own risk table already answers them — its mitigation for "Home Assistant is hard for non-technical installers" is "offer a preconfigured hub" — and with no add-on, that preconfigured hub is now the *only* one-box story, so it moves from a nice-to-have to the supported path for that user.
 
-That raises the one open question decision 1 leaves behind: **may the preconfigured hub also run Home Assistant on the same machine, as a separate service?** It is compatible with everything here, because the process boundary is what matters and not the box count. But it reintroduces the resource contention of argument 2, so if it ships that way, N-S2 must be measured in that configuration specifically rather than inferred from the separate-machine case. This is a packaging decision for M1, not an architecture one.
+That raises the question decision 1 leaves behind: **may the preconfigured hub also run Home Assistant on the same machine, as a separate service?** Decision 6 defers it to M1, which is the right place: it is a packaging choice, not an architecture one, and nothing in M1 is blocked by leaving it open.
+
+What deferring it costs, so that M1 inherits the condition rather than the surprise: one box is compatible with everything in this document, because the process boundary is what matters and not the box count. But it reintroduces the resource contention of argument 2 above. So if the preconfigured hub ships with HA on the same machine, **N-S2 must be measured in that configuration specifically**, under HA recorder write load, rather than inferred from the separate-machine case. That measurement is the decision criterion in M1, not a follow-up to it.
 
 ## 2. The safety path never traverses Home Assistant
 
@@ -88,75 +91,76 @@ No automatic failover between a direct backend and HA for the same device. If th
 
 This makes the adapter boundary load-bearing rather than tidy-minded: HA entities and direct-API devices are both mapped into Wheelberry's own capability model (F1) inside their own adapters, never passed through. It is also what makes the spec's "Node-RED and openHAB later" ambition a bounded piece of work.
 
-## 4. HA automations may command movement
+## 4. Movement is not exposed into Home Assistant
 
-Decision 4 permits full capability through the Wheelberry integration inside HA, including movement. This is the decision that needs the most care, because an HA automation is written by a user or an installer in a tool entirely outside Wheelberry's safety review.
+This decision moved twice, and the path matters because it is the reasoning that should survive, not the preference.
 
-The way to implement it honestly is to stop treating the integration as a privileged peer and treat it as **an actor like any other**, specifically an unattended-class actor in the sense [movement-semantics.md](movement-semantics.md) defines — an HA automation is never present, perceives nothing, and has no reflexes.
+The first revision recommended non-movement only. Richard's first answer permitted full capability including movement, and the second revision implemented that — honestly, which meant writing down what it costs. Reading that cost alongside decision 5, he reversed it. The reversal is the better decision, and the argument for it is below rather than in a changelog, because this is the kind of thing that gets reopened in a year by someone who was not in the conversation.
 
-### Enforcement is entirely Wheelberry-side
+### The argument
 
-The integration submits a *request* to the hub's own API. P1 to P8 are evaluated by the policy engine exactly as they are for Wheelberry's internal routine engine: clinician opt-in, one axis at a time, run-time cap, daily budget, announcement with a cancel window, no movement during an attended lease, audit. HA never gets a path that skips this, and there is no "trusted automation" flag.
+Decisions 4 and 5 compounded. Separately each was manageable; together they produced this:
 
-Revised matrix row, replacing the first revision's:
+> If Wheelberry exposes movement into HA, and users and carers hold HA logins, then **an HA login becomes a route to commanding movement** — and HA cannot tell us which human is behind a session.
+
+The second revision's answer was to split by deployment: HA logins fine in a single household, HA installer-facing in organisations. That answer was worse than it looked. It made a safety property conditional on a classification nobody reliably applies — a household with two agency carers and a changing rota is which one? — and it put the burden of getting it right on an installer at the point of sale.
+
+Withdrawing movement removes the hazard at its source instead. One rule everywhere, and the rule is about **capability**, not about who is allowed to log in. Decision 5 then stands untouched, because there is no longer anything behind an HA login worth the argument.
+
+### What the integration exposes
+
+| Class | Into Home Assistant |
+| --- | --- |
+| **C1** Read — device state, seating status | **Yes**, read-only |
+| **C2** Non-movement control — lights, plugs, heating, scenes of these | **Yes** |
+| **C3** Movement of a person — in any mode, including unattended | **No** |
+| **C4** Safety and system configuration | **No** |
+
+Revised matrix row, replacing the second revision's:
 
 | Channel | C1 | C2 | C3 M-HOLD | C3 M-PRESET | C3 M-UNATTENDED | C4 | Stop offered |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Home Assistant automation, via the Wheelberry integration | Yes | Yes | No | No | **Within envelope** | No | n/a |
+| Home Assistant automation, via the Wheelberry integration | Yes | Yes | No | No | **No** | No | n/a |
 
-M-HOLD and M-PRESET stay "No" because both require a present human, and an automation cannot be one — the same reason the routine engine row reads that way. Movement by automation is unattended movement, and gets the unattended envelope.
+An HA automation can switch a lamp, read that the seat is reclined, and notify someone about it. It cannot tilt, recline, or trigger a Wheelberry preset that does. The scope table's promise that the integration is "two-way" still holds; what crosses the boundary is bounded.
 
-### Who reviews user-written HA automations?
+### What stays, because C1 and C2 still need it
 
-Nobody can, and pretending otherwise would be the failure mode here. The honest answer is that the review burden moves to the Wheelberry side entirely, with one addition to the preconditions:
+Three rules from the second revision survive the reversal and should not be dropped with it:
 
-- **P9, new** Movement commanded by an actor outside Wheelberry — a third-party platform automation — requires a clinician opt-in **distinct from** the opt-in for Wheelberry's own routines, revocable by the user from any channel. Granting unattended movement to Wheelberry routines does not grant it to HA automations.
+- **Attribution.** Commands arriving through the integration are attributed to the **integration's own Wheelberry actor**, with its own permissions — never to whichever human happens to be driving the HA session, because HA cannot tell us and we must not guess.
+- **Enforcement is entirely Wheelberry-side.** The integration submits a request to the hub's own API and the policy engine evaluates it like any other actor's. There is no privileged path and no "trusted automation" flag. This is what makes a movement request from HA a *refusal* rather than an impossibility — the difference matters, because impossibility is a property of today's entity list and refusal is a property of the policy engine.
+- **Refusals must be legible.** An automation author must be able to tell "it said no" from "it did not hear me", and repeat requests inside a cool-down are refused rather than queued. Silently dropped requests become retry loops.
 
-Two existing preconditions become load-bearing rather than belt-and-braces, and should be read that way in the M2 hazard analysis:
+### Reading seating state is still an exposure
 
-- **P4's daily budget per axis** is now the primary control against a looping or misconfigured automation. An automation that retriggers on a flapping sensor is a realistic failure, where a Wheelberry routine firing twice an hour is not.
-- **P5's announcement and cancel window** is the user's only defence against an automation they forgot they wrote.
+C1 stays Yes, and that is right: knowing the chair is reclined is useful in an automation and harmless to the chair. But seating usage is health-adjacent data sitting in a system whose access control Wheelberry does not manage, so it is a DPIA question rather than an engineering one — N-D4 below. If the DPIA objects, the proportionate answer is a coarser status (occupied, reclined, moving) rather than withdrawing C1.
 
-### The integration must not look like a position control
+### If this is ever reopened
 
-If a movement axis is exposed to HA as an ordinary settable entity, automation authors will reasonably write `set position`, see nothing happen for ten seconds, and add a retry. Retry loops against a cancel window are precisely the behaviour A4 forbids for assistants, and they are worse here because nobody is watching.
+It may be, and the argument above is about a compounding risk rather than about movement-in-HA being wrong in principle. So the gate is kept rather than deleted, which is what P9 is now for:
 
-So the exposed entities should be:
+- **P9** No actor outside Wheelberry may command movement of a person. Reopening this for a given platform requires: a clinician opt-in **distinct from** the one for Wheelberry's own routines and revocable by the user from any channel; movement exposed as press-like **preset requests** and read-only status, never as settable positions; and the platform's inability to identify the human behind a session recorded as an accepted hazard in the risk file.
 
-- A **request** entity per permitted named preset — press-like, not settable — whose acceptance is not the same event as the movement happening.
-- A **read-only status** entity reporting requested, announced, moving, completed, cancelled or refused.
-- No settable position entity, for the same reason M-PRESET positions are nominal: there is nothing to measure. See F15.
+The middle condition is the one that is easy to lose. If a movement axis were exposed to HA as an ordinary settable entity, automation authors would reasonably write `set position`, see nothing happen for ten seconds, and add a retry — and retry loops against a cancel window are precisely the behaviour A4 forbids for assistants, worse here because nobody is watching. There is also nothing to set: preset positions are nominal until M-TARGET. See F15.
 
-Refusals and cancellations must be reported distinctly enough that an automation author can tell "it said no" from "it did not hear me", and repeat requests inside a cool-down are refused rather than queued.
-
-### Residual risk, for the risk file
-
-A user-written automation with C3 access is a route to moving a person without their intent at the time, which P1 to P9 reduce but do not eliminate. It belongs in the ISO 14971 analysis as an accepted hazard with these controls, in the same form as the prompt-injection entry — written down so the independent safety review sees it rather than discovers it.
+Two existing preconditions would become load-bearing rather than belt-and-braces in that event, and the M2 hazard analysis should read them that way: **P4's daily budget** is the only real control against an automation retriggering on a flapping sensor, and **P5's cancel window** is the user's only defence against an automation they forgot they wrote.
 
 ## 5. Users and carers may hold HA logins
 
-Decision 5 reverses the first revision's recommendation, so the requirements must now say what is true rather than what we would prefer.
+Decision 5 reverses the first revision's recommendation and survives the reversal of decision 4 unchanged. With movement withdrawn, what an HA login grants is bounded to C1 and C2 — but the requirements must still say what is true rather than what we would prefer.
 
 Home Assistant's authentication model has no per-user, per-entity authorisation: an HA user who can see a dashboard can generally act on what is on it. Wheelberry's F7 permission model is therefore enforceable **only above HA**, over Wheelberry's own channels. With HA logins in users' and carers' hands, three things follow:
 
-1. **F7 does not govern HA-backed devices for anyone holding an HA login.** A carer with an HA login can switch a lamp that Wheelberry would have refused them.
+1. **F7 does not govern HA-backed devices for anyone holding an HA login.** A carer with an HA login can switch a lamp that Wheelberry would have refused them. After decision 4, this is the whole of the exposure: lamps, plugs, heating, scenes. Nothing that moves a person.
 2. **F14's log is incomplete by design.** Anything done in HA's own UI, app or automations never passes through Wheelberry and cannot appear in its audit log.
-3. **Seating state exposed into HA sits in a system whose access control we do not manage.** Usage patterns are health-adjacent, so this is a DPIA item, not merely an engineering one — it belongs with the DPIA already proposed as an M0 deliverable.
+3. **Seating state exposed into HA sits in a system whose access control we do not manage.** Usage patterns are health-adjacent, so this is a DPIA item rather than merely an engineering one, and it belongs with the DPIA proposed as an M0 deliverable.
 
-### The one place decisions 4 and 5 compound
+Worth stating to installers in plain words, because it is the sentence that prevents a later surprise:
 
-Separately, each is manageable. Together they are the sharp edge in this document: **if Wheelberry exposes movement into HA, and users and carers hold HA logins, then an HA login becomes a route to commanding movement.**
+> Holding a Home Assistant login grants the integration actor's permissions over every non-movement device exposed into HA. HA access cannot be differentiated per person, and no Wheelberry seating can be commanded from it.
 
-The guard is attribution. Commands arriving through the integration are attributed to the **integration's own Wheelberry actor**, with its own permissions and its own P9 opt-in — never to whichever human happens to be driving the HA session, because HA cannot tell us and we must not guess. The consequence is unavoidable and should be stated to installers in plain words:
-
-> Within a household, holding an HA login grants the integration actor's permissions over every device exposed into HA, including any movement presets enabled there. HA access cannot be differentiated per person.
-
-That is acceptable in a single-household deployment, where the carer who has the HA login is the carer who is in the room anyway. It is not acceptable where users and carers are many and the pairings vary. So:
-
-- **Single-household deployments.** HA logins for users and carers are fine, under the statement above.
-- **Organisational deployments** (F7's per-user, per-carer model doing real work): Home Assistant stays installer-facing, because the permission model is the product there and HA cannot express it.
-
-That split honours decision 5 where it was aimed without quietly breaking F7 where it matters most.
+The organisational case no longer needs a rule of its own. Where F7's per-user model is doing real work, an installer may still choose to keep HA installer-facing — but that is now a configuration preference about lamps, not a safety control, and it is correctly left to them.
 
 ## Consequences
 
@@ -166,29 +170,29 @@ That split honours decision 5 where it was aimed without quietly breaking F7 whe
 4. Home Assistant is one backend among several, behind a backend adapter boundary. Radio protocol stacks stay out of scope; direct IP device APIs are a case-by-case judgement against the four-part test above.
 5. Exactly one backend owns any given device. No automatic failover, no dual paths.
 6. No safety-relevant path traverses any third-party home-automation platform.
-7. The HA integration is a full-capability actor including movement, enforced entirely Wheelberry-side, unattended-class, under its own clinician opt-in (P9), exposing request and status entities rather than settable positions.
-8. F7 governs Wheelberry channels. Where users and carers hold HA logins, HA-backed devices are outside it, and organisational deployments keep HA installer-facing.
+7. The HA integration exposes read and non-movement control only. No movement of a person is commandable from any actor outside Wheelberry, in any mode. Integration requests are attributed to a single Wheelberry actor and evaluated by the policy engine with no privileged path.
+8. F7 governs Wheelberry channels. Where users and carers hold HA logins, HA-backed non-movement devices are outside it.
 9. F14's audit log is scoped to actions through Wheelberry channels, and says so.
+10. Whether the preconfigured hub runs HA on the same box is an M1 packaging decision, whose criterion is N-S2 measured in that configuration.
 
 ## Requirement wording
 
 Continuing from [movement-semantics.md](movement-semantics.md), which ended at F18, N-P3 and P8.
 
-- **F7, revised** Enforce permissions per user, per device and per channel for every action taken through a Wheelberry channel. Where a device is reached through a third-party platform that cannot express these permissions, record that the platform's own access is outside Wheelberry's control, and require the platform to be installer-facing in deployments where per-user permissions are relied upon.
+- **F7, revised** Enforce permissions per user, per device and per channel for every action taken through a Wheelberry channel. Where a device is reached through a third-party platform that cannot express these permissions, record that the platform's own access is outside Wheelberry's control, and state it in installer documentation and in the onboarding flow that enables the platform.
 - **F14, revised** Keep an audit log of every action taken through a Wheelberry channel: who, which channel, which device, result. Where a device is reached through a third-party platform, record that the command was issued and its result, and state in the log that actions taken directly in that platform are outside Wheelberry's record.
 - **F19, new** The hub owns its own lifecycle and runs as its own process. No home-device platform may host it, manage its updates, or be required for it to start.
 - **F20, new** The hub must provide seating control, chair-switch input, local stop and its own user interface when any home-device platform is absent, unreachable or restarting, showing affected devices as unavailable without degrading anything else.
-- **F21, new** Where Wheelberry exposes its devices into a third-party platform, commands arriving from that platform are attributed to a single Wheelberry actor, evaluated against the full policy engine with no privileged path, and treated as unattended whenever they command movement.
+- **F21, new** Where Wheelberry exposes its devices into a third-party platform, expose read and non-movement control only. Commands arriving from that platform are attributed to a single Wheelberry actor and evaluated against the full policy engine with no privileged path. Movement of a person is refused, with a reason the platform can report.
 - **F22, new** Reach every home device through a backend adapter into one capability model, with exactly one backend owning a device at a time and no automatic failover between backends for the same device.
 - **N-R1, new** Hub availability is independent of any home-device platform: no planned or automatic update of that platform may interrupt seating control or local stop.
 - **N-R2, new** The hub returns to full local function unaided after power loss, within a target to be set in M1, with no dependency on a third-party platform having started first.
-- **P9, new** (extending the unattended preconditions) Movement commanded by an actor outside Wheelberry requires a clinician opt-in distinct from the opt-in for Wheelberry's own routines, revocable by the user from any channel.
+- **P9, revised** (extending the unattended preconditions) No actor outside Wheelberry may command movement of a person. Reopening this for a given platform requires a clinician opt-in distinct from the one for Wheelberry's own routines and revocable by the user from any channel, movement exposed as preset requests and read-only status rather than settable positions, and the platform's inability to identify the human behind a session recorded as an accepted hazard.
 
 N-P2's 800 ms home-device target was written for Zigbee round trips through HA. A direct IP backend should beat it comfortably, so when the first one ships, N-P2 is worth splitting per backend rather than held at the slowest path.
 
 ## Still open, not blocking
 
-- **Does the preconfigured hub ship with Home Assistant on the same box?** The one question decision 1 leaves. A packaging choice for M1; if yes, N-S2 must be measured in that configuration.
 - **Which HA installation types are supported as a backend?** HA OS, Container, Core and Supervised differ in how they update and how reachable they are. An installer-documentation question that decides what "supported" means in a support call.
 - **HA authentication lifecycle.** Long-lived access tokens do not rotate themselves. Token rotation and revocation belong with the pairing lifecycle gap recorded in [spec-review.md](spec-review.md).
 - **Which lighting API first, and does it need a cloud account?** A direct backend that depends on a vendor cloud fails the "works with the internet down" principle and would need the same absent-backend treatment as F20.
