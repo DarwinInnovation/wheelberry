@@ -2,7 +2,9 @@
 
 Proposed 19 October 2026 after a restart, and **adopted the same day** with five decisions: the proof of concept moves a seat *and* controls home devices; the first two trial users are named; the licence is Apache-2.0; the earlier documents are parked in [`background/`](background/); and the hub grows from the existing Python test site rather than being rewritten.
 
-Five more the same afternoon: the bench observer is named; **timed runs are back in**, so seating is not limited to people who can hold a control; the hardware licence is deferred and the PCB repository stays private; the hub and firmware publish once the observed bench check has passed; and the personal email address has been rewritten out of this repository's history. See [Settled on 19 October](#settled-on-19-october).
+Five more the same afternoon: the bench observer is named; **timed runs are back in**, so seating is not limited to people who can hold a control; the hardware licence is deferred and the PCB repository stays private; the hub and firmware publish once the observed bench check has passed; and the personal email address has been rewritten out of this repository's history.
+
+Four more that evening, and one of them moves real work: **Mike cannot reliably hold a control**, so timed runs are on step 2's critical path rather than waiting for a recruited tester; the firmware's per-channel timeout turns out to be the watchdog rather than the energise cap timed runs need; the entity is **Darwin Innovation Ltd**; and the email address stays in `bedberry`. See [Settled on 19 October](#settled-on-19-october).
 
 **This is the plan.** It supersedes everything in `background/`, which describes a different and much larger project — see [What is parked](#what-is-parked) at the end.
 
@@ -67,7 +69,7 @@ Each of these is a good idea with a worked-out design already sitting in [`backg
 Seating moves a person's body. That cannot be cut down, so it is stated in five lines rather than forty requirements:
 
 1. **A stop the user can reach, for the whole of every move.** Two modes and no others: **hold-to-run**, where release stops it, and a **timed run**, where one action starts a bounded move and the user stops it — under the conditions in [Timed runs](#timed-runs-and-what-they-cost). Hold-to-run is preferred by anyone who can use it.
-2. **The watchdog is in the firmware.** The output module releases every output if commands stop arriving — 300 ms, already built, already unit-tested. No timing-critical safety logic lives in the hub. It is a complete backstop for hold-to-run and **not** for a timed run; see below, because that is the one place the restart's safety story needed new work rather than less.
+2. **The watchdog is in the firmware.** The output module releases every output if commands stop arriving — 300 ms, already built, already unit-tested. No timing-critical safety logic lives in the hub, though the 300 ms itself is a number the hub sends rather than one the firmware keeps. It is a complete backstop for hold-to-run and **not** for a timed run; see below, because that is the one place the restart's safety story needed new work rather than less.
 3. **Nothing moves unattended.** No schedules, no automations, no routines that move a person. A timed run is *attended* — the user is there with their finger, eye or switch on the stop — and reopening it does not reopen schedules.
 4. **The chair's own limits stay in force.** Range is set in LiNX at installation by the installer, with the user's clinician. Wheelberry cannot exceed it and never claims to enforce a position it cannot measure — there is no position sensing.
 5. **The user can always stop it, and so can anyone in the room.** The stop control, the chair's own controls, and power.
@@ -92,24 +94,38 @@ What makes a timed run acceptable, carried over from [`background/movement-seman
 4. **Off by default, enabled per user and per axis**, with hold-to-run preferred for anyone who can use it.
 5. **One axis at a time.** No composite moves.
 
-**The hard part is that the firmware watchdog stops being the backstop.** In hold-to-run, every hub failure converges on safe: the hub stops resending, and the output module releases everything within 300 ms. A timed run inverts that — the hub is *deliberately* resending with nobody holding anything, so a timer that never fires looks exactly like normal operation, and the watchdog is being fed by the very bug it would otherwise catch. A timed run therefore needs a bound that does not live in the same code path as the resend loop. In order of preference:
+**The hard part is that the firmware watchdog stops being the backstop.** In hold-to-run, every hub failure converges on safe: the hub stops resending, and the output module releases everything within 300 ms. A timed run inverts that — the hub is *deliberately* resending with nobody holding anything, so a timer that never fires looks exactly like normal operation, and the watchdog is being fed by the very bug it would otherwise catch. A timed run therefore needs a bound that does not live in the same code path as the resend loop. That bound belongs in the output module firmware, outside the hub entirely, and it closes the two-controller hole in rule 5 as a side effect.
 
-- **A maximum continuous energise time per output, in the output module firmware.** This is the right place — independent of the hub entirely, and it also closes the two-controller hole in rule 5. Whether the firmware has this, or can cheaply get it, is the first question to answer before any timed-run code is written.
-- Failing that, a separately scheduled hard stop in the hub that can kill the serial writer, owned by neither the session nor the resend task.
+**Asked and answered on 19 October — and the answer needs one correction, made by reading the firmware rather than taking the memory.** There *is* a per-channel timeout in the output module, and it is what makes the 300 ms watchdog work. But it is **not a cap**, and a timed run needs a cap:
+
+- The timeout is a field of each command — `D:<n>:<v>:<m>`, where the *host* supplies `m` — and every command for a channel cancels and re-arms that channel's timer. The hub sends `m=300` and resends every 100 ms, which is precisely the 300 ms watchdog. There is no second, independent limit underneath it: `m=0` means permanent, there is no maximum, and nothing tracks how long a channel has been energised.
+- So the resend loop re-arms the very timer that would catch it. **The firmware timeout is a bound on hub silence, not on movement** — exactly the distinction a timed run turns into a safety property.
+
+The bound therefore has to be built, and it is small, because the parts are there: the module already keeps one one-shot timer per channel (six digital, two analogue enables), with its own critical sections and a fault stop that releases everything. The shape of it is written up as [task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet): a maximum continuous energise time per channel, timed from the OFF→ON transition, **not** re-armed by repeat commands, forcing the channel off at the cap and **latching it off until an explicit off arrives.** The latch is the whole of it: without one the hub's next resend 100 ms later re-energises the output, and the cap is a duty-cycle limiter rather than a stop.
+
+Two notes alongside it, both of which improve the system as it stands rather than only enabling timed runs:
+
+- **The 300 ms watchdog is a number the hub supplies, not a constant the firmware keeps.** A hub that sent `m=0` on an assert would switch it off for that channel and nothing downstream would notice. Today's hub does not — it sends `m=0` only on deassert, which was checked rather than assumed — but a firmware cap is what makes that class of bug survivable instead of silent.
+- **The fallback is worse and is not being taken.** A separately scheduled hard stop inside the hub shares a process with the fault it exists to catch.
 
 Two further consequences, both cheap to state now and expensive to discover later:
 
 - **A timed run ends where the clock says, not where the user says.** Combined with the fact that power loss or a mid-run stop leaves an axis anywhere in its travel, the clinical question per axis is not "is the target safe" but **"is this axis's whole configured travel safe to be left in?"** Where the answer is no, the remedy is narrowing the chair's range at install, or no timed run on that axis. That is a conversation with Richard's seating clinician, not a setting.
 - **Stop latency depends on the input method.** A finger releases in milliseconds; a dwell stop costs a fixation, a scanning stop costs a scan step. So the run-time cap is set per user *and* input method, not per axis alone, and the measured stop time for that user's actual input is what justifies the cap.
 
-**When it gets built:** after step 1 and before or during step 2, triggered by the first trial user who cannot comfortably hold a control. Richard can hold, so step 1 needs none of this; whether Mike can is a question to ask him, and the answer sets the date. Timed runs get their own observed bench check with Ben before anyone sits in a chair under one — the afternoon described above covers hold-to-run, and a new mode needs new watching.
+**When it gets built: step 2, and it is now on the critical path rather than a contingency.** The trigger was "the first trial user who cannot comfortably hold a control", and on 19 October that fired: **Mike cannot hold one reliably.** Richard can, so step 1 still needs none of this and nothing above changes. But step 2 does, in two ways worth saying plainly:
+
+- **Step 2 is no longer "a screen".** It is a screen, plus a new movement mode, plus the firmware cap that mode depends on, plus a second observed session with Ben, plus the whole-travel judgement with a clinician. Each is small; together they are most of step 2, and the done-when — Mike moves his own seat unaided, twice — is not reachable without all of them.
+- **The cheap fallback is closed too.** The chair's own switches were the answer for someone who cannot use a touchscreen, but the input module fires on a *held* LOW (4 s by default), so it is another hold. For Mike it is not a way round timed runs.
+
+What is still unknown is what Mike *can* do — dwell, scanning, a switch tap, something else. That is the next thing to find out, because the measured stop time for his actual input is what sets the run-time cap, and nothing is sized until it is known. Timed runs get their own observed bench check with Ben before anyone sits in a chair under one: the afternoon described above covers hold-to-run, and a new mode needs new watching.
 
 ## Build order
 
 Four steps. Each one ends with something that works in front of a person.
 
 1. **The hub drives the chair — largely built already.** The Python test site does hold-to-run on six seating outputs over a WebSocket today, with the 300 ms firmware watchdog, a 100 ms resend, release on pointer-up, tab switch, network loss and power loss, a systemd unit, and a `--test` mode that runs with no hardware attached. The chair's own switches are in it too. So step 1 is to **verify that on a chair and close a short list of gaps**, not to build it — the list is in [`step-1-tasks.md`](step-1-tasks.md). Done when: Richard can tilt a chair from a phone, and pulling the USB cable mid-move stops it.
-2. **The screen becomes usable by the second user.** Mike's input method, Mike's layout, Mike's words. Built with them, not for them. If their input cannot hold, this is where [timed runs](#timed-runs-and-what-they-cost) are built, observed and enabled. Done when: they do it unaided, twice, without being shown how.
+2. **The screen becomes usable by the second user.** Mike's input method, Mike's layout, Mike's words. Built with them, not for them. **Mike cannot reliably hold a control, so this is also where [timed runs](#timed-runs-and-what-they-cost) are built, observed and enabled** — the firmware cap first, then the mode, then a second session with Ben. That makes step 2 the longest of the four, and the one where the safety work actually is. Done when: they do it unaided, twice, without being shown how.
 3. **The home devices join.** Lights and heating alongside the seating, in one layout, same screen. Done when: one action list covers the chair and the room.
 4. **It lives in their home for a month.** Installed, unsupervised, with a way to tell us when it breaks. Done when: we have a month of their experience and know what to build next. The hub needs a passcode before this step: a home network is not a trusted network, and today anyone who can reach the port can move the chair.
 
@@ -126,9 +142,9 @@ Open source is in the mission, so it is how we work, not a licence file added la
 
 ### The licence
 
-**Apache-2.0 for the software** — permissive, with an explicit patent grant, which matters for a project that touches hardware. It lets a wheelchair manufacturer ship Wheelberry inside a closed product without contributing anything back, and that was chosen knowingly: for this product, being adopted by the people who already sell chairs is worth more than copyleft leverage. `LICENSE` is in this repository.
+**Apache-2.0 for the software** — permissive, with an explicit patent grant, which matters for a project that touches hardware. It lets a wheelchair manufacturer ship Wheelberry inside a closed product without contributing anything back, and that was chosen knowingly: for this product, being adopted by the people who already sell chairs is worth more than copyleft leverage. `LICENSE` is in this repository, and as of 19 October its copyright line reads **Darwin Innovation Ltd** — the registered company, which is the name every repository published from here should carry.
 
-The **hardware** designs need a different licence — Apache-2.0 is written for source code and does not fit a PCB. **Deferred on 19 October, with `pcb_wheelberry_dongles` staying private** until it is settled, which is the one combination that carries no risk: an unlicensed public board file is all-rights-reserved whatever the README says. CERN-OHL-P remains the permissive match when the question is taken up. Worth knowing when it is: the organisation already publishes hardware — `bedberry` ("Open source PCB for bed/chair control") and the `wheelberry.pretty` KiCad library are both public under **MIT**, so the precedent exists and the choice is really whether to keep using it. MIT and Apache-2.0 sit together fine; Apache-2.0's patent grant is the reason to prefer it for new code.
+The **hardware** designs need a different licence — Apache-2.0 is written for source code and does not fit a PCB. **Deferred on 19 October, with `pcb_wheelberry_dongles` staying private** until it is settled, which is the one combination that carries no risk: an unlicensed public board file is all-rights-reserved whatever the README says. CERN-OHL-P remains the permissive match when the question is taken up. Worth knowing when it is: the organisation already publishes hardware — `bedberry` ("Open source PCB for bed/chair control") and the `wheelberry.pretty` KiCad library are both public under **MIT**, so the precedent exists and the choice is really whether to keep using it. `bedberry`'s 2022 copyright line says "DarwinInnovation" rather than Darwin Innovation Ltd; it is wrong and it is being left alone with the rest of that repository, but the new licence is the one to copy, not that one. MIT and Apache-2.0 sit together fine; Apache-2.0's patent grant is the reason to prefer it for new code.
 
 ### What is public today is the parked work; what is private is the live work
 
@@ -146,7 +162,7 @@ Of sixteen Wheelberry-named repositories, five are public and none of the five i
 
 - **The old commits are still fetchable from GitHub by their SHA**, which was verified rather than assumed: GitHub keeps unreachable objects until it garbage-collects, and a rewrite does not trigger that. Closing it properly means asking GitHub Support to purge them. The practical exposure is small — the address was never in a pull request diff, so a reader would have to know an old SHA — but "rewritten" is not the same as "unavailable" and the difference is worth stating.
 
-- **`bedberry` is public and still carries it**, in `software/cfg/okinRemote.json5`. It has one star, so it is not unobserved. Same address, same fix, a different repository and not yet done.
+- **`bedberry` is public and still carries it**, in `software/cfg/okinRemote.json5` — and **it is deliberately being left there, decided 19 October.** The honest consequence, since the point of the rewrite was to get the address out of code search: it is still in code search. One query across the organisation still returns it. What the rewrite bought is that the address no longer arrives with a clone of *this* repository, which is the one about to be read by strangers; it did not make the address private. Worth revisiting the next time `bedberry` is touched for any other reason, and before anything that draws attention to the organisation.
 - `node-wheelberry-proxy` carries it too, in `cfg/wheelchair.json5` and `cfg/blanket.json5`. It is private, so there is no exposure today — but it is a reason to check rather than assume before anything else is flipped public.
 
 ## Regulatory and data protection — noted
@@ -193,15 +209,22 @@ Trial users (named above), the hub's language (**Python**, growing the existing 
 
 Then, the same afternoon: the **bench observer** (Ben Miller-Smith), **timed runs in scope** so that seating is reachable by any input method, the **hardware licence deferred** with the PCB repository staying private, **publication gated on the observed bench check**, and the **email history rewritten**.
 
+And four that evening, of which the third moves the most work:
+
+| | Settled |
+| --- | --- |
+| The legal entity | **Darwin Innovation Ltd**, now the copyright line in `LICENSE` |
+| `bedberry`'s copy of the email address | **Left in place**, with the residual exposure stated above rather than quietly dropped |
+| **Mike cannot reliably hold a control** | Timed runs move onto step 2's critical path, and the chair's own switches do not substitute |
+| The firmware energise cap | A per-channel timeout **exists but is not a cap** — the bound a timed run needs is new firmware work, scoped as task 14 |
+
 ## Open items
 
-- [ ] **Does the output module firmware cap continuous energise time per output — and if not, can it cheaply?** The first question to answer before any timed-run code, because it is where that mode's bound belongs. It also closes the two-controller hole in rule 5 for free.
-- [ ] **Can Mike hold a control?** Not idle curiosity: the answer decides whether timed runs are built for step 2 or wait for a recruited tester. One conversation.
+- [ ] **Build the firmware energise cap** — [task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet). Answered on 19 October and the answer changed the job: the per-channel timeout exists, but it is the watchdog, re-armed by every resend, so the cap a timed run needs is new firmware work. Small, testable in the existing host harness, and the first thing in the timed-run chain.
+- [ ] **What input method does Mike actually use?** He cannot reliably hold, which is settled. What he *can* do is not, and it sets the measured stop time, which sets the run-time cap, which sizes everything else. One conversation, and the slowest thing it unblocks.
 - [ ] **Run-time caps, and the whole-travel judgement per axis**, with Richard's seating clinician. Needed before timed runs are enabled, not before they are written.
 - [ ] **Who recruits testers, and through whom?** Starts now, in parallel with step 1, because it is the slowest thing on the list.
-- [ ] **The personal email in `bedberry`**, which is public and starred. Same address, same fix as this repository, not yet done.
-- [ ] **Ask GitHub Support to purge the unreachable objects** in this repository, which is the only way to make the rewritten commits actually unfetchable.
-- [ ] **The legal entity name for the copyright line** in `LICENSE`, currently "Darwin Innovation". `bedberry`'s 2022 MIT licence uses "DarwinInnovation", which is a precedent rather than an answer — it reads like the GitHub handle, not a registered company.
+- [ ] **Ask GitHub Support to purge the unreachable objects** in this repository, which is the only way to make the rewritten commits actually unfetchable. Lower value than it was, now that the same address stays readable in `bedberry` by choice.
 - [ ] **Can the screen actually be *installed* on the trial users' own tablets over plain HTTP?** A service worker needs a secure context, which a LAN address over HTTP is not. iOS add-to-home-screen works without one; Android Chrome's install prompt does not appear. Verify on the real device before promising anything offline — or drop "installable" and use a bookmarked full-screen page.
 - [ ] **Does the dongle or LiNX path expose motor current or stall detection?** With no position sensing, current is the only signal that something is trapped. Cheap to add while the board is still being revised.
 - [ ] **Which chair control systems beyond LiNX matter?** Both named users are on LiNX, so this is a question about recruitment, not about step 1.

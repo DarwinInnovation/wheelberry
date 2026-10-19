@@ -26,7 +26,7 @@ So step 1 is **verify it on a chair, then close the gaps**. Not weeks of buildin
 
 Nobody in the chair. Wheels off the ground or the chair on blocks.
 
-1. **Axis mapping.** Drive all six outputs; check each one moves the axis its name claims, in the direction its icon claims. *Done when:* `config.yaml`'s action names match the physical axes, verified one at a time, and anything mislabelled is fixed in config rather than remembered.
+1. **Axis mapping, and how long a full travel takes.** Drive all six outputs; check each one moves the axis its name claims, in the direction its icon claims. **Time each axis end to end while you are there** — it is free now and it is the number [task 14](#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet) has to be set above, because a cap shorter than a legitimate full-travel hold would cut ordinary hold-to-run off mid-move. *Done when:* `config.yaml`'s action names match the physical axes, verified one at a time, anything mislabelled is fixed in config rather than remembered, and there is a travel time written down per axis. Note that the footrest and the toggles are **analogue** actions on the shared `ring` channel, not digital outputs — the cap has to cover those two enables as well as the six digital channels.
 2. **The failsafe, broken six ways, each mid-move.** Release the button; switch browser tab; put the phone in flight mode; pull the USB cable; `kill -9` the server; pull power from the Pi. *Done when:* every one of the six stops the axis, and each result is written down — including any that stop slower than expected.
 3. **Measure the stop, once.** Video at 60 fps is enough: frames from release to axis stationary. *Done when:* there is a number on paper to compare against the 300 ms watchdog. One measurement, not a programme — but an assumed number is not evidence.
 4. **The chair's own switch.** One chair button, through the input module, triggering one action. *Done when:* it fires reliably, and the 4 s default LOW hold is tuned to something a person can actually do on purpose but not by accident.
@@ -57,7 +57,7 @@ What still holds: the firmware watchdog, the chair's own controls, and pulling t
 
 *Fix:* one active controller at a time with explicit takeover, and a stop that cancels every session's resend task, not just the caller's. A single owner variable in the server. *Done when:* two phones, one holding, the other pressing stop — and the chair stops.
 
-Two things raise its priority since it was written. It is now a **precondition for timed runs** (task 13), because a run nobody is holding makes "a stop that cancels every resend task" the whole safety story rather than a second line of defence. And it is the same bug class as a timed run that over-runs: in both cases the hub is streaming commands that no human is asking for, which is precisely what the firmware watchdog cannot see. A maximum continuous energise time in the output module would close both at once, from outside the hub.
+Two things raise its priority since it was written. It is now a **precondition for timed runs** (task 13), because a run nobody is holding makes "a stop that cancels every resend task" the whole safety story rather than a second line of defence. And it is the same bug class as a timed run that over-runs: in both cases the hub is streaming commands that no human is asking for, which is precisely what the firmware watchdog cannot see. A maximum continuous energise time in the output module would close both at once, from outside the hub — [task 14](#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet), which does not exist in the firmware yet and has to be built.
 
 ### 10. A passcode (before step 4, not before step 1)
 
@@ -75,19 +75,53 @@ The three repositories the proof of concept depends on — the hub, and both fir
 
 `pcb_wheelberry_dongles` is **not** in this task — it stays private until the hardware licence is settled, which was deferred the same day.
 
-*Done when:* each of the three is public, each has the Apache-2.0 `LICENSE`, `__pycache__/` is removed from the hub repo and ignored, and each has been **searched** for personal data rather than assumed clean. That check is not a formality: one code search for the personal address across the organisation finds it in five files in three repositories, one of which — `bedberry` — is public today and has a star. The private `node-wheelberry-proxy` carries it too.
+*Done when:* each of the three is public, each has the Apache-2.0 `LICENSE`, `__pycache__/` is removed from the hub repo and ignored, and each has been **searched** for personal data rather than assumed clean. That check is not a formality: one code search for the personal address across the organisation finds it in five files in three repositories, one of which — `bedberry` — is public today and has a star. The private `node-wheelberry-proxy` carries it too. `bedberry` is being left as it is, decided 19 October; the point of the check here is the three repositories about to become public, where the same assumption would be new exposure rather than existing exposure.
 
 ### 13. Timed runs: the mode that needs new safety work, not less
 
-Added 19 October, when timed runs came back into scope so that seating is reachable by eye gaze, scanning and anything else that cannot hold. **This is step 2 work, not step 1** — Richard can hold a control, so nothing in phases 1 to 3 needs it. It is listed here because its first item is free while the bench is already set up, and because getting it wrong is the most expensive mistake available in this project.
+Added 19 October, when timed runs came back into scope so that seating is reachable by eye gaze, scanning and anything else that cannot hold. **This is step 2 work, not step 1** — Richard can hold a control, so nothing in phases 1 to 3 needs it. It is listed here because getting it wrong is the most expensive mistake available in this project, and because [task 14](#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet) ahead of it is work that can start now.
+
+**It is also no longer optional.** Settled the same evening: Mike cannot reliably hold a control, and the input module's trigger is a 4 s *held* LOW, so the chair's own switches are not a way round it either. Step 2 does not reach its done-when without this section.
 
 The conditions are in [`plan.md`](plan.md#timed-runs-and-what-they-cost). The work, in order:
 
-- **Ask the firmware: is there a maximum continuous energise time per output?** Do this during phase 1, with the bench already wired. In hold-to-run every hub failure stops the resend and the watchdog releases within 300 ms. A timed run has the hub resending with nobody holding anything, so a timer that never fires is indistinguishable from working correctly — the watchdog is fed by the bug it would otherwise catch. A firmware energise cap puts the bound outside the hub, where it belongs, and closes task 9's hole as a side effect. If it does not exist, the fallback is a separately scheduled hard stop in the hub owned by neither the session nor the resend task, and that is strictly worse because it is in the same process as the fault.
+- ~~**Ask the firmware: is there a maximum continuous energise time per output?**~~ **Asked and answered, 19 October — see [task 14](#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet).** There is a per-channel timeout; it is the 300 ms watchdog, not a cap, and the cap has to be built.
 - **The whole-travel judgement, per axis, with Richard's seating clinician.** A timed run ends where the clock says, not where the user says, so the question per axis is whether its *entire* configured travel is safe to be left in. Where it is not: narrow the LiNX range at install, or no timed run on that axis.
 - **Run-time caps per user and input method.** A finger releases in milliseconds, a dwell stop costs a fixation, a scanning stop costs a scan step — so measure the stop with the user's own input before setting the cap that depends on it.
 - **The run screen is only a stop.** During a run, nothing else is on it, so any input lands on stop and there is nothing to navigate. *Done when:* a dwell user and a scanning user can each stop a run on their first attempt, measured.
 - **A second observed session with Ben**, covering timed runs specifically, before anyone sits in a chair under one.
+
+### 14. The firmware energise cap: the bound that does not exist yet
+
+Added 19 October, on the answer to task 13's first item. **This is firmware work, it needs no chair and no clinician, and it can start now** — which makes it the one piece of the timed-run chain that is not waiting on anybody.
+
+Grounded in `DarwinInnovation/firmware_wheelberry_output_module` at `ade948d`, `Src/output_control.c` and `docs/technical-overview.md`, read rather than remembered, because the whole mode rests on this being true.
+
+**What is there.** A per-channel one-shot timeout, eight of them: six digital outputs and the two analogue enables. **What is not there** is a cap, and the difference is the entire task:
+
+| | |
+| --- | --- |
+| The timeout is a *field of the command* | `D:<n>:<v>:<m>` — the host supplies `m`. `0` means permanent, the range runs to 2³²−1 ms, and there is no maximum |
+| Every command re-arms it | `cmd_digital` deactivates the channel's timer, applies the state, then re-arms from `m` |
+| So the resend loop feeds it | The hub sends `m=300` every 100 ms. That *is* the 300 ms watchdog — correct, and exactly why it cannot also be the cap |
+| Nothing accumulates | No channel records how long it has been energised |
+
+One thing found while reading, worth recording because it is a sharp edge rather than a bug today: **the expiry callback toggles the channel rather than forcing it off** (`apply_digital(idx, !dig[idx].logical_val)`). A *deassert* carrying a non-zero timeout would therefore schedule an *assert*. The hub sends `D:n:0:0` on release, so this is not live — checked, not assumed — but the cap below must force off and never toggle.
+
+**The design.** Per channel, a compile-time maximum continuous energise time:
+
+- Timed from the OFF→ON transition, **not** re-armed by a repeat command for a state the channel is already in.
+- On expiry, **force off and latch off.** While latched, asserts on that channel are ignored; the latch clears only on an explicit `v=0` (and with everything else on disconnect, which already releases and cancels).
+- Applies to all eight channels, including the two analogue enables — the footrest axes move through `ring`, so a digital-only cap would miss them.
+- **Not host-settable.** A cap the hub can raise is the same bug one layer along.
+
+**The latch is the whole point.** Force off without it and the hub's next resend, 100 ms later, re-energises the output: a duty-cycle limiter, not a stop.
+
+**Sizing it:** above the longest legitimate full travel, which [task 1](#phase-1--bench-chair-empty) measures, with margin — a cap shorter than a real hold-to-run move would cut ordinary use off mid-move. Below that it is a judgement about how long a limb could be driven against something, which belongs with the clinician conversation in task 13 and not in a constant chosen here.
+
+*Done when:* a channel held by a continuous 100 ms resend releases at the cap and stays released until an explicit off — proved first in the firmware repo's existing host regression harness, which runs the real output-control code against mocks and already covers tick wraparound, and then once on the bench.
+
+**It does not replace [task 9](#9-two-controllers-at-once-safety).** The cap is seconds and comes from outside the hub; a stop someone in the room presses has to be milliseconds and comes from inside it. The cap is what makes task 9's failure survivable, not what makes it unnecessary.
 
 ## Also in step 1, but not gating it
 
@@ -97,6 +131,6 @@ The conditions are in [`plan.md`](plan.md#timed-runs-and-what-they-cost). The wo
 
 ## Not in step 1
 
-Home control (step 3). Mike's layout and input method (step 2). Any cloud, any remote access. Timed runs themselves, which are in the proof of concept but are step 2 work — only the firmware question in task 13 belongs here. Motor current and stall detection, which is an open hardware question in `plan.md` and not a blocker here.
+Home control (step 3). Mike's layout and input method (step 2). Any cloud, any remote access. Timed runs themselves, which are in the proof of concept but are step 2 work — though [task 14](#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet), the firmware cap they depend on, needs nothing from step 1 and can be written alongside it. Motor current and stall detection, which is an open hardware question in `plan.md` and not a blocker here.
 
 **Position** presets stay out altogether, timed runs notwithstanding: there is no position sensing, so a named angle is a claim we cannot make. A timed run is a duration with an honest name, not a position with a dishonest one.
