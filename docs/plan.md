@@ -217,10 +217,12 @@ And four that evening, of which the third moves the most work:
 | `bedberry`'s copy of the email address | **Left in place**, with the residual exposure stated above rather than quietly dropped |
 | **Mike cannot reliably hold a control** | Timed runs move onto step 2's critical path, and the chair's own switches do not substitute |
 | The firmware energise cap | A per-channel timeout **exists but is not a cap** — the bound a timed run needs is new firmware work, scoped as task 14 |
+| Full travel, slowest axis | **20 to 40 s** from recollection, which sizes task 14's cap at a provisional 90 s per channel. Phase 1 measures it |
+| Task 14 and task 9 | **Specified and held.** Planning only until phase 1 has been done on a chair |
 
 ## Open items
 
-- [ ] **Build the firmware energise cap** — [task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet). Answered on 19 October and the answer changed the job: the per-channel timeout exists, but it is the watchdog, re-armed by every resend, so the cap a timed run needs is new firmware work. Small, testable in the existing host harness, and the first thing in the timed-run chain.
+- [ ] **Build the firmware energise cap** — [task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet). Answered on 19 October and the answer changed the job: the per-channel timeout exists, but it is the watchdog, re-armed by every resend, so the cap a timed run needs is new firmware work. Small, testable in the existing host harness, and the first thing in the timed-run chain. **Specified and held, not started** — along with task 9, the two-controller stop. Both are the only work here that waits on nobody, and both are held by choice until phase 1 has been done on a real chair, which is the right order: phase 1 produces the measured travel time the cap is sized from, and the bench check is what task 9 is a precondition for.
 - [ ] **What input method does Mike actually use?** He cannot reliably hold, which is settled. What he *can* do is not, and it sets the measured stop time, which sets the run-time cap, which sizes everything else. One conversation, and the slowest thing it unblocks.
 - [ ] **Run-time caps, and the whole-travel judgement per axis**, with Richard's seating clinician. Needed before timed runs are enabled, not before they are written.
 - [ ] **Who recruits testers, and through whom?** Starts now, in parallel with step 1, because it is the slowest thing on the list.
