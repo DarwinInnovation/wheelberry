@@ -72,7 +72,7 @@ Seating moves a person's body. That cannot be cut down, so it is stated in five 
 4. **The chair's own limits stay in force.** Range is set in LiNX at installation by the installer, with the user's clinician. Wheelberry cannot exceed it and never claims to enforce a position it cannot measure — there is no position sensing.
 5. **The user can always stop it, and so can anyone in the room.** The stop control, the chair's own controls, and power.
 
-Those five hold from the first time a chair moves. They are cheap because the firmware already does the hard part.
+Those five hold from the first time a chair moves. Four of them are cheap because the firmware already does the hard part. Rule 1's second mode is the one that costs something, and the next section is why.
 
 **Rule 5 is the one the code does not yet honour.** Two phones can hold the same output, and one releasing does not stop the other's command stream — so "anyone in the room can stop it" is currently true of the chair's own controls and of the power, but not of Wheelberry. It is task 9 in [`step-1-tasks.md`](step-1-tasks.md): a small fix, stated in the rules as though already true, and now also a precondition for timed runs rather than only a tidy-up.
 
