@@ -1,5 +1,11 @@
 # Audit retention and the erasure answer
 
+> **Parked — background, not the plan.**
+>
+> Written between 11 and 18 October 2026 for a larger, funded version of Wheelberry, and moved here on 19 October 2026. The live plan is [`../plan.md`](../plan.md) and it supersedes this document. Nothing here is known to be wrong; it is ahead of where the project is.
+>
+> **What it is worth later:** becomes necessary the week remote access or an organisational customer appears, and three of its design constraints cannot be retrofitted cheaply once the first record is written.
+
 18 October 2026. Fifth and last workstream out of [spec-review.md](spec-review.md), following [movement-semantics.md](movement-semantics.md), [home-assistant-decision.md](home-assistant-decision.md) and [requirements.md](requirements.md).
 
 This closes contradiction 5: **F14 wants an audit log of every action; N-D3 promises the user can export and delete their data, treated as health data under UK GDPR.** Both cannot be unconditionally true. F26 created the slot for the answer; this document proposes what goes in it.

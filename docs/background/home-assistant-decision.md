@@ -1,6 +1,12 @@
 # Home Assistant: backend, not platform
 
-Third revision, 18 October 2026. The first revision proposed options; Richard decided all five questions; the second revision implemented them and surfaced one consequence he then acted on, reversing decision 4. This revision is written to the decisions as they now stand. Second workstream out of [spec-review.md](spec-review.md), following [movement-semantics.md](movement-semantics.md).
+> **Parked — background, not the plan.**
+>
+> Written between 11 and 18 October 2026 for a larger, funded version of Wheelberry, and moved here on 19 October 2026. The live plan is [`../plan.md`](../plan.md) and it supersedes this document. Nothing here is known to be wrong; it is ahead of where the project is.
+>
+> **What it is worth later:** settles standalone-versus-add-on and the backend-adapter boundary — exactly one backend owns a device at a time. Still correct and still the design plan.md assumes.
+
+Third revision, 18 October 2026. The first revision proposed options; Richard decided all five questions; the second revision implemented them and surfaced one consequence they then acted on, reversing decision 4. This revision is written to the decisions as they now stand. Second workstream out of [spec-review.md](spec-review.md), following [movement-semantics.md](movement-semantics.md).
 
 The spec contradicted itself on Home Assistant: the architecture section states *"Key decision: build on Home Assistant, not beside it"*, while the open questions still ask *"Should Wheelberry sit on top of Home Assistant (recommended) or stand alone?"*. That contradiction is now closed.
 
@@ -15,7 +21,7 @@ The spec contradicted itself on Home Assistant: the architecture section states 
 | 5 | Is Home Assistant installer-facing only? | **No.** Users and carers may hold HA logins |
 | 6 | May the preconfigured hub run HA on the same box? | **Decide in M1**, as a packaging question |
 
-Decision 4 moved twice. The first revision recommended non-movement only; Richard's first answer was full capability including movement; and when the second revision set out what that meant alongside decision 5, he reversed it to non-movement only. Decision 3 adds a direction the first revision did not consider. Decisions 1 and 2 go at least as far as it recommended. The rest of this document is written to the decisions as they now stand.
+Decision 4 moved twice. The first revision recommended non-movement only; Richard's first answer was full capability including movement; and when the second revision set out what that meant alongside decision 5, Richard reversed it to non-movement only. Decision 3 adds a direction the first revision did not consider. Decisions 1 and 2 go at least as far as it recommended. The rest of this document is written to the decisions as they now stand.
 
 ## The distinction that still does the work
 
@@ -95,7 +101,7 @@ This makes the adapter boundary load-bearing rather than tidy-minded: HA entitie
 
 This decision moved twice, and the path matters because it is the reasoning that should survive, not the preference.
 
-The first revision recommended non-movement only. Richard's first answer permitted full capability including movement, and the second revision implemented that — honestly, which meant writing down what it costs. Reading that cost alongside decision 5, he reversed it. The reversal is the better decision, and the argument for it is below rather than in a changelog, because this is the kind of thing that gets reopened in a year by someone who was not in the conversation.
+The first revision recommended non-movement only. Richard's first answer permitted full capability including movement, and the second revision implemented that — honestly, which meant writing down what it costs. Reading that cost alongside decision 5, Richard reversed it. The reversal is the better decision, and the argument for it is below rather than in a changelog, because this is the kind of thing that gets reopened in a year by someone who was not in the conversation.
 
 ### The argument
 

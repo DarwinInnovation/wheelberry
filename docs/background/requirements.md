@@ -1,5 +1,11 @@
 # Wheelberry requirements register
 
+> **Parked — background, not the plan.**
+>
+> Written between 11 and 18 October 2026 for a larger, funded version of Wheelberry, and moved here on 19 October 2026. The live plan is [`../plan.md`](../plan.md) and it supersedes this document. Nothing here is known to be wrong; it is ahead of where the project is.
+>
+> **What it is worth later:** the requirement register for a funded product. The traceability matrix is reusable as-is; F1-F32 are not needed until there is more than one user.
+
 18 October 2026. Fourth workstream out of [spec-review.md](spec-review.md), following [movement-semantics.md](movement-semantics.md) and [home-assistant-decision.md](home-assistant-decision.md).
 
 **This document is the authoritative list of requirements.** It consolidates F1–F14 and the non-functional table from [spec.md](spec.md) with everything the decision records changed or added, numbers the non-functional requirements so they can be traced like the functional ones, makes the milestone gates measurable, and adds the requirements the review found missing.

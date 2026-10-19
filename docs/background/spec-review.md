@@ -1,5 +1,11 @@
 # Review of the Wheelberry spec
 
+> **Parked — background, not the plan.**
+>
+> Written between 11 and 18 October 2026 for a larger, funded version of Wheelberry, and moved here on 19 October 2026. The live plan is [`../plan.md`](../plan.md) and it supersedes this document. Nothing here is known to be wrong; it is ahead of where the project is.
+>
+> **What it is worth later:** the record of how the five contradictions were found, and the only place the review method is written down. Item 5 — the existing-work truth pass — was never completed; part of it is now done in plan.md.
+
 Review of `docs/spec.md` and `docs/mission-statement.md` as they stand on the `rework` branch, 17 October 2026. Cross-checked against the code in this monorepo. Written for Richard to react to; nothing here is a decision.
 
 **All five workstreams have now been worked, and `spec.md` has been reconciled with every decision taken** (18 October 2026). [requirements.md](requirements.md) is the authoritative requirements list; `spec.md` now indexes it by title rather than carrying a second copy. This document remains the index of what the review found and what is left.

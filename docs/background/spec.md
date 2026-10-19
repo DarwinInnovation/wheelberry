@@ -1,5 +1,11 @@
 # Wheelberry: Spec, Architecture and Milestones
 
+> **Parked — background, not the plan.**
+>
+> Written between 11 and 18 October 2026 for a larger, funded version of Wheelberry, and moved here on 19 October 2026. The live plan is [`../plan.md`](../plan.md) and it supersedes this document. Nothing here is known to be wrong; it is ahead of where the project is.
+>
+> **What it is worth later:** the six-milestone plan for the full product, which plan.md replaces for now. The user types, the architecture layering and the channel model are reusable when there is a product to build.
+
 Draft for discussion. Agreed 11 October 2026; **reconciled with the four decision records on 18 October 2026.**
 
 This file began as a snapshot of the working [Claude Doc](https://claude.ai/code/artifact/7fb1cfd2-8184-444a-9efe-f79792d1fc75). It is no longer a snapshot: the reconciliation below was applied here and has not been applied there, so **this file is ahead of the Claude Doc.** Either port these changes back or retire the artifact as the working copy — two editable copies of the same spec is the problem this pass exists to fix.
