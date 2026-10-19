@@ -303,7 +303,7 @@ Three changes were made beyond the list, all of the same kind — the same contr
 | Out of scope | "Building our own home-automation protocols or radios" | Correct as written, but add that the line is the radio, not the integration — direct IP device APIs are in scope case by case |
 | Risk table | "Home Assistant is hard for non-technical installers → offer a preconfigured hub" | Now the only one-box story, so it is the supported path for that user rather than a mitigation |
 | Risk table | Two accepted hazards are recorded only in the decision records | Add prompt injection against an assistant with movement access, and entrapment undetectable without sensing |
-| Existing work | `user@example.com` named in one config file | It is in both `wheelchair.json5` and `blanket.json5`, and in git history |
+| Existing work | A personal email address named in one config file | It is in both `wheelchair.json5` and `blanket.json5`, and in git history. Rewritten out on 19 October 2026 |
 | Existing work, monorepo row | "reuse Alexa account linking, portal shell" | Account linking is coupled to MongoDB user and token models; the cloud plan specifies Postgres |
 
 ### Needs a new image

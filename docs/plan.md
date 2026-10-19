@@ -2,6 +2,8 @@
 
 Proposed 19 October 2026 after a restart, and **adopted the same day** with five decisions: the proof of concept moves a seat *and* controls home devices; the first two trial users are named; the licence is Apache-2.0; the earlier documents are parked in [`background/`](background/); and the hub grows from the existing Python test site rather than being rewritten.
 
+Five more the same afternoon: the bench observer is named; **timed runs are back in**, so seating is not limited to people who can hold a control; the hardware licence is deferred and the PCB repository stays private; the hub and firmware publish once the observed bench check has passed; and the personal email address has been rewritten out of this repository's history. See [Settled on 19 October](#settled-on-19-october).
+
 **This is the plan.** It supersedes everything in `background/`, which describes a different and much larger project — see [What is parked](#what-is-parked) at the end.
 
 Wheelberry is an open-source project with no users yet. The plan is therefore one thing: **get something a few disabled people actually use, into their homes, and find out whether it helps.** Everything here is in service of that and nothing else.
@@ -37,7 +39,7 @@ That order is right — it gets a chair moving this week rather than after a rec
 Two consequences:
 
 - **Recruiting is real work with a long lead time, and it starts now**, in parallel — not after step 2. An OT, a wheelchair service, a user group: approaching them takes weeks of other people's time, and finding out that it is slow is much better in week one than in week eight.
-- **The second pair of eyes for the bench check cannot be Richard.** The rule below is that someone other than the person who wrote the code watches the chair move. If Richard writes the hub and sits in the chair, that person has to be named.
+- **The second pair of eyes for the bench check is Ben Miller-Smith**, Richard's father. The rule below is that someone other than the person who wrote the code watches the chair move, and with Richard both writing the hub and sitting in the chair, that person had to be named. He is not a trial user and does not need to be: what the role requires is that he has not read the code and will say what he actually saw.
 
 Not "disabled people" as a category: two named people with their own chairs and their own 2 a.m. problem, with their OT or seating clinician aware of what is going on and agreeing the chair's configured range. Designing for six user types at once was the main way the previous plan grew.
 
@@ -49,7 +51,7 @@ Not "disabled people" as a category: two named people with their own chairs and 
 | --- | --- | --- |
 | Seating control | Tilt, recline, leg rests on a LiNX chair via the Wheelberry Dongle | The differentiator. Nobody else does this accessibly, and the hardware already exists and works |
 | Home control | Lights and heating, through Home Assistant where the user has it, or a device's own LAN API where they don't | Low risk, immediately useful, and the thing the user can demo to a friend |
-| One accessible screen | A web page on the home network. Few, large targets. Touch and held switch drive everything; dwell and scanning drive the home devices but not seating — see [the collision](#where-the-rules-and-the-accessible-screen-collide) | Without this the rest is unreachable, which is the entire point of the project |
+| One accessible screen | A web page on the home network. Few, large targets. Any input method reaches everything, including seating: held inputs by hold-to-run, dwell and scanning by [timed runs](#timed-runs-and-what-they-cost) | Without this the rest is unreachable, which is the entire point of the project |
 | The chair's own switches | The existing input module, so a chair button can trigger a Wheelberry action. **Already built** | Cheapest accessible input there is: it is already mounted where they can reach it |
 | Works with no internet | The hub is in the home and needs nothing outside it | A light switch that depends on a cloud is not a light switch |
 | A passcode on the hub | One shared secret per hub, no accounts, no roles | Today anyone who can reach the port can move the chair. Required before step 4, not before step 1 |
@@ -64,35 +66,50 @@ Each of these is a good idea with a worked-out design already sitting in [`backg
 
 Seating moves a person's body. That cannot be cut down, so it is stated in five lines rather than forty requirements:
 
-1. **Hold-to-run.** Movement happens only while a human is actively holding the control. Release stops it.
-2. **The watchdog is in the firmware.** The output module releases every output if commands stop arriving — 300 ms, already built, already unit-tested. No timing-critical safety logic lives in the hub.
-3. **Nothing moves unattended.** No schedules, no automations, no routines that move a person. Not in the proof of concept.
+1. **A stop the user can reach, for the whole of every move.** Two modes and no others: **hold-to-run**, where release stops it, and a **timed run**, where one action starts a bounded move and the user stops it — under the conditions in [Timed runs](#timed-runs-and-what-they-cost). Hold-to-run is preferred by anyone who can use it.
+2. **The watchdog is in the firmware.** The output module releases every output if commands stop arriving — 300 ms, already built, already unit-tested. No timing-critical safety logic lives in the hub. It is a complete backstop for hold-to-run and **not** for a timed run; see below, because that is the one place the restart's safety story needed new work rather than less.
+3. **Nothing moves unattended.** No schedules, no automations, no routines that move a person. A timed run is *attended* — the user is there with their finger, eye or switch on the stop — and reopening it does not reopen schedules.
 4. **The chair's own limits stay in force.** Range is set in LiNX at installation by the installer, with the user's clinician. Wheelberry cannot exceed it and never claims to enforce a position it cannot measure — there is no position sensing.
-5. **The user can always stop it, and so can anyone in the room.** Releasing the control, the chair's own controls, and power.
+5. **The user can always stop it, and so can anyone in the room.** The stop control, the chair's own controls, and power.
 
 Those five hold from the first time a chair moves. They are cheap because the firmware already does the hard part.
 
-**Rule 5 is the one the code does not yet honour.** Two phones can hold the same output, and one releasing does not stop the other's command stream — so "anyone in the room can stop it" is currently true of the chair's own controls and of the power, but not of Wheelberry. It is task 9 in [`step-1-tasks.md`](step-1-tasks.md), and it is a small fix, but it is a safety rule stated as though already true.
+**Rule 5 is the one the code does not yet honour.** Two phones can hold the same output, and one releasing does not stop the other's command stream — so "anyone in the room can stop it" is currently true of the chair's own controls and of the power, but not of Wheelberry. It is task 9 in [`step-1-tasks.md`](step-1-tasks.md): a small fix, stated in the rules as though already true, and now also a precondition for timed runs rather than only a tidy-up.
 
-Beyond them: before any trial user sits in a moving chair, someone other than the person who wrote the code watches it move through its whole range, repeatedly, with the power pulled at random points. Not an independent safety review with a report — one afternoon, a bench, and a second pair of eyes.
+Beyond them: before any trial user sits in a moving chair, **Ben Miller-Smith** watches it move through its whole range, repeatedly, with the power pulled at random points. Not an independent safety review with a report — one afternoon, a bench, and a second pair of eyes.
 
-### Where the rules and the accessible screen collide
+### Timed runs, and what they cost
 
-One thing the five rules do not survive contact with, and it is much better found now: **rule 1 and the promise of a screen driveable by eye gaze cannot both hold for seating.** A dwell-click is a click, not a hold. An eye-gaze user selects, and the selection is over — there is no held state left to release, so there is nothing for hold-to-run to be true of.
+Hold-to-run and a screen driveable by eye gaze cannot both be true for seating. A dwell-click is a click, not a hold: the user selects, the selection is over, and there is no held state left to release. Faced with that, the first draft of this plan restricted seating to hold-capable inputs and accepted that a user who can hold nothing would drive their seat from the chair's own switches or not at all.
 
-The honest split:
+**That was rejected on 19 October, and rightly.** It excluded exactly the people the project exists for, on the grounds that including them was expensive. So **timed runs are in the proof of concept**: one action starts a move, the move runs for a bounded time, and the user stops it. Home devices continue to need none of this — a light is one-shot and any input drives it.
 
-- **Movement needs an input that can be held** — a finger on a touch target, a switch the user keeps pressed, or the chair's own buttons through the input module, which is the cheapest held input available because it is already mounted where they can reach it.
-- **Home devices need no such thing.** A light is one-shot. Any input method, dwell included, drives it.
+What makes a timed run acceptable, carried over from [`background/movement-semantics.md`](background/movement-semantics.md) where it was worked out in full:
 
-So the screen is accessible for the whole product, and seating within it is reachable only by hold-capable inputs. For a trial user who can hold nothing at all, seating in the proof of concept runs from the chair's own switches or not at all — which is a fact about who the first users can be, not a backlog item. The alternative was worked out in full before the restart (timed presets, bounded by a run-time cap, a presence heartbeat and a clinician opt-in, in [`background/movement-semantics.md`](background/movement-semantics.md)). It is not cheap, and it is not in the proof of concept.
+1. **A run-time cap per axis**, agreed with the user's clinician, short enough that the whole run is a mistake you can live with.
+2. **A stop reachable by the user's own input method, with no confirmation step** — and so, during a run, **the whole screen is the stop**. Nothing else is on it. For a dwell user the stop is wherever they are already looking; for a scanning user there is one item to land on. A stop you have to navigate to is not a stop.
+3. **Nominal names only.** "Tilt back", never "tilt to 20°". There is no position sensing, so the second one is a claim we cannot make.
+4. **Off by default, enabled per user and per axis**, with hold-to-run preferred for anyone who can use it.
+5. **One axis at a time.** No composite moves.
+
+**The hard part is that the firmware watchdog stops being the backstop.** In hold-to-run, every hub failure converges on safe: the hub stops resending, and the output module releases everything within 300 ms. A timed run inverts that — the hub is *deliberately* resending with nobody holding anything, so a timer that never fires looks exactly like normal operation, and the watchdog is being fed by the very bug it would otherwise catch. A timed run therefore needs a bound that does not live in the same code path as the resend loop. In order of preference:
+
+- **A maximum continuous energise time per output, in the output module firmware.** This is the right place — independent of the hub entirely, and it also closes the two-controller hole in rule 5. Whether the firmware has this, or can cheaply get it, is the first question to answer before any timed-run code is written.
+- Failing that, a separately scheduled hard stop in the hub that can kill the serial writer, owned by neither the session nor the resend task.
+
+Two further consequences, both cheap to state now and expensive to discover later:
+
+- **A timed run ends where the clock says, not where the user says.** Combined with the fact that power loss or a mid-run stop leaves an axis anywhere in its travel, the clinical question per axis is not "is the target safe" but **"is this axis's whole configured travel safe to be left in?"** Where the answer is no, the remedy is narrowing the chair's range at install, or no timed run on that axis. That is a conversation with Richard's seating clinician, not a setting.
+- **Stop latency depends on the input method.** A finger releases in milliseconds; a dwell stop costs a fixation, a scanning stop costs a scan step. So the run-time cap is set per user *and* input method, not per axis alone, and the measured stop time for that user's actual input is what justifies the cap.
+
+**When it gets built:** after step 1 and before or during step 2, triggered by the first trial user who cannot comfortably hold a control. Richard can hold, so step 1 needs none of this; whether Mike can is a question to ask him, and the answer sets the date. Timed runs get their own observed bench check with Ben before anyone sits in a chair under one — the afternoon described above covers hold-to-run, and a new mode needs new watching.
 
 ## Build order
 
 Four steps. Each one ends with something that works in front of a person.
 
 1. **The hub drives the chair — largely built already.** The Python test site does hold-to-run on six seating outputs over a WebSocket today, with the 300 ms firmware watchdog, a 100 ms resend, release on pointer-up, tab switch, network loss and power loss, a systemd unit, and a `--test` mode that runs with no hardware attached. The chair's own switches are in it too. So step 1 is to **verify that on a chair and close a short list of gaps**, not to build it — the list is in [`step-1-tasks.md`](step-1-tasks.md). Done when: Richard can tilt a chair from a phone, and pulling the USB cable mid-move stops it.
-2. **The screen becomes usable by the second user.** Mike's input method, Mike's layout, Mike's words. Built with them, not for them. Done when: they do it unaided, twice, without being shown how.
+2. **The screen becomes usable by the second user.** Mike's input method, Mike's layout, Mike's words. Built with them, not for them. If their input cannot hold, this is where [timed runs](#timed-runs-and-what-they-cost) are built, observed and enabled. Done when: they do it unaided, twice, without being shown how.
 3. **The home devices join.** Lights and heating alongside the seating, in one layout, same screen. Done when: one action list covers the chair and the room.
 4. **It lives in their home for a month.** Installed, unsupervised, with a way to tell us when it breaks. Done when: we have a month of their experience and know what to build next. The hub needs a passcode before this step: a home network is not a trusted network, and today anyone who can reach the port can move the chair.
 
@@ -102,16 +119,16 @@ No dates. **Step 1 is days of verification rather than weeks of building** — t
 
 Open source is in the mission, so it is how we work, not a licence file added later:
 
-- **Public from the start**, including the parts that are embarrassing. The dongle PCB, the firmware and the hub.
+- **Public, including the parts that are embarrassing** — the hub and both firmwares, **once the observed bench check has passed.** Decided 19 October: "from the start" lost to the fact that what we are publishing is code that moves a person's body, and publishing it before anyone other than its author has watched it do so invites someone to run it on a chair on the strength of our say-so. The gate is one afternoon away, not one milestone away.
 - **A README a non-programmer can act on**: what this is, who it is for, what it cannot do, and what it costs to build one.
-- **Buildable by someone who is not us** — a parts list and a flashing procedure. The first external build is a real milestone and the strongest signal the project is alive.
+- **Buildable by someone who is not us** — a parts list and a flashing procedure. With the board files staying private (below), an external build needs a dongle from us, so the honest form of this is: everything needed to build one *except the board*, and we send the board. The first external build is still the strongest signal the project is alive; it is now a build we have to help with.
 - **Developed in the open**: decisions in the repo, as short notes, where a contributor or a sceptical OT can read them.
 
 ### The licence
 
 **Apache-2.0 for the software** — permissive, with an explicit patent grant, which matters for a project that touches hardware. It lets a wheelchair manufacturer ship Wheelberry inside a closed product without contributing anything back, and that was chosen knowingly: for this product, being adopted by the people who already sell chairs is worth more than copyleft leverage. `LICENSE` is in this repository.
 
-The **hardware** designs need a different licence — Apache-2.0 is written for source code and does not fit a PCB. Still open, and it is cheapest to settle before the PCB repository goes public.
+The **hardware** designs need a different licence — Apache-2.0 is written for source code and does not fit a PCB. **Deferred on 19 October, with `pcb_wheelberry_dongles` staying private** until it is settled, which is the one combination that carries no risk: an unlicensed public board file is all-rights-reserved whatever the README says. CERN-OHL-P remains the permissive match when the question is taken up. Worth knowing when it is: the organisation already publishes hardware — `bedberry` ("Open source PCB for bed/chair control") and the `wheelberry.pretty` KiCad library are both public under **MIT**, so the precedent exists and the choice is really whether to keep using it. MIT and Apache-2.0 sit together fine; Apache-2.0's patent grant is the reason to prefer it for new code.
 
 ### What is public today is the parked work; what is private is the live work
 
@@ -120,10 +137,15 @@ That is backwards, and it is the practice above being a word rather than a habit
 | Public | Private |
 | --- | --- |
 | `wheelberry` — this monorepo: the TypeScript proxy, Alexa skill and portal. All of it parked | `wheelberry_dongle_http_test_site` — Python, the hub this plan is built on |
-| `wheelberry.pretty`, `wheelberry_hat`, `node-wheelberry-i2c`, `bedberry` | `firmware_wheelberry_output_module` — C, where the 300 ms watchdog lives |
-| `di-ha-addons` — Home Assistant add-ons, Python | `firmware_wheelberry_input_module`, `pcb_wheelberry_dongles` |
+| `bedberry`, `bedberry_splitter`, `wheelberry.pretty`, `wheelberry_hat`, `wheelberry-travelling`, `node-wheelberry-i2c`, `di-ha-addons` | `firmware_wheelberry_output_module` — C, where the 300 ms watchdog lives |
+| | `firmware_wheelberry_input_module`, `pcb_wheelberry_dongles`, and seven parked `node-wheelberry-*` and travelling-app repositories |
 
-Publishing the three private repositories the proof of concept depends on is a task in [`step-1-tasks.md`](step-1-tasks.md), not a someday. One thing to clear first: the **personal email address** committed in this monorepo's `apps/proxy/cfg/wheelchair.json5`, `apps/proxy/cfg/blanket.json5` and `apps/proxy/README.md`, and in its git history. That is already public and live now. The firmware and PCB repositories need the same check before they are flipped, while it is still cheap.
+Of sixteen Wheelberry-named repositories, five are public and none of the five is live work. The three the proof of concept depends on — the hub and both firmwares — publish **once the observed bench check has passed**; that is task 12 in [`step-1-tasks.md`](step-1-tasks.md), with a date attached to a gate rather than to a someday. `pcb_wheelberry_dongles` stays private pending its licence.
+
+**Richard's personal email address is out of this repository, as of 19 October**, and is not quoted anywhere in these documents, because quoting it was part of the problem. It was committed in `apps/proxy/cfg/wheelchair.json5` and `apps/proxy/cfg/blanket.json5` on `main` — two files, not the three an earlier draft claimed; `apps/proxy/README.md` never contained it — and written out in full in two of the parked documents in `background/`, which is this review having republished the thing it was reporting. History has been rewritten across all three branches and force-pushed. Two things that are not finished:
+
+- **`bedberry` is public and still carries it**, in `software/cfg/okinRemote.json5`. It has one star, so it is not unobserved. Same address, same fix, a different repository and not yet done.
+- `node-wheelberry-proxy` carries it too, in `cfg/wheelchair.json5` and `cfg/blanket.json5`. It is private, so there is no exposure today — but it is a reason to check rather than assume before anything else is flipped public.
 
 ## Regulatory and data protection — noted
 
@@ -154,7 +176,7 @@ So they are kept, not deleted, and not live. All six now sit in [`background/`](
 
 | Document | What it is worth later |
 | --- | --- |
-| [`background/movement-semantics.md`](background/movement-semantics.md) | The source of the five safety rules above, plus the analysis for when timed presets, unattended movement and AI control return. Needed soonest of the six — it is where the accessible-input problem is worked through |
+| [`background/movement-semantics.md`](background/movement-semantics.md) | Already drawn on: the five safety rules and the timed-run conditions both come from here. Still holds the analysis for when unattended movement and AI control return. The most useful of the six by a distance |
 | [`background/home-assistant-decision.md`](background/home-assistant-decision.md) | Settles standalone-versus-add-on and the backend boundary: exactly one backend owns a device at a time. Still correct, and still the design this plan assumes |
 | [`background/requirements.md`](background/requirements.md) | The requirement register for a funded product; the traceability matrix is reusable as-is |
 | [`background/audit-retention.md`](background/audit-retention.md) | Becomes necessary the week remote access or an organisational customer appears, and three of its constraints cannot be retrofitted once records exist |
@@ -167,13 +189,16 @@ Nothing in them is contradicted by this plan. They are ahead of it.
 
 Trial users (named above), the hub's language (**Python**, growing the existing test site — the earlier spec's TypeScript choice is withdrawn), the software licence (**Apache-2.0**), the scope of the proof of concept (**seating and home control**), and where the old documents live (**`background/`**).
 
+Then, the same afternoon: the **bench observer** (Ben Miller-Smith), **timed runs in scope** so that seating is reachable by any input method, the **hardware licence deferred** with the PCB repository staying private, **publication gated on the observed bench check**, and the **email history rewritten**.
+
 ## Open items
 
-- [ ] **Who is the second pair of eyes for the bench check?** Blocks the first time anyone sits in a moving chair. Named person, not a role.
+- [ ] **Does the output module firmware cap continuous energise time per output — and if not, can it cheaply?** The first question to answer before any timed-run code, because it is where that mode's bound belongs. It also closes the two-controller hole in rule 5 for free.
+- [ ] **Can Mike hold a control?** Not idle curiosity: the answer decides whether timed runs are built for step 2 or wait for a recruited tester. One conversation.
+- [ ] **Run-time caps, and the whole-travel judgement per axis**, with Richard's seating clinician. Needed before timed runs are enabled, not before they are written.
 - [ ] **Who recruits testers, and through whom?** Starts now, in parallel with step 1, because it is the slowest thing on the list.
-- [ ] **A hardware licence for the PCB designs.** Apache-2.0 does not fit; CERN-OHL-P is the permissive match for the software choice. Needed before `pcb_wheelberry_dongles` is published.
-- [ ] **The legal entity name for the copyright line** in `LICENSE`, currently "Darwin Innovation".
-- [ ] **The personal email in public git history** — rewrite history, or accept it. Three files at HEAD plus history.
+- [ ] **The personal email in `bedberry`**, which is public and starred. Same address, same fix as this repository, not yet done.
+- [ ] **The legal entity name for the copyright line** in `LICENSE`, currently "Darwin Innovation". `bedberry`'s 2022 MIT licence uses "DarwinInnovation", which is a precedent rather than an answer — it reads like the GitHub handle, not a registered company.
 - [ ] **Can the screen actually be *installed* on the trial users' own tablets over plain HTTP?** A service worker needs a secure context, which a LAN address over HTTP is not. iOS add-to-home-screen works without one; Android Chrome's install prompt does not appear. Verify on the real device before promising anything offline — or drop "installable" and use a bookmarked full-screen page.
 - [ ] **Does the dongle or LiNX path expose motor current or stall detection?** With no position sensing, current is the only signal that something is trapped. Cheap to add while the board is still being revised.
 - [ ] **Which chair control systems beyond LiNX matter?** Both named users are on LiNX, so this is a question about recruitment, not about step 1.

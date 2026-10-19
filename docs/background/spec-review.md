@@ -48,7 +48,7 @@ All eleven are now closed, each by a numbered requirement in [requirements.md](r
 
 ## Factual corrections
 
-- The personal email address is in **both** `apps/proxy/cfg/wheelchair.json5` and `apps/proxy/cfg/blanket.json5` (`user@example.com`), not only the file the spec names. It is also in the git history, so if the repository is public, removing it from HEAD alone does not fix the exposure; it needs a history rewrite or an accepted decision to leave it.
+- The personal email address is in **both** `apps/proxy/cfg/wheelchair.json5` and `apps/proxy/cfg/blanket.json5`, not only the file the spec names. It is also in the git history, so if the repository is public, removing it from HEAD alone does not fix the exposure; it needs a history rewrite or an accepted decision to leave it. *(Rewritten out of this repository on 19 October 2026, and not quoted here any more — quoting it was itself part of the exposure.)*
 - The existing proxy uses **MongoDB** (`apps/proxy/src/db/connection.ts`, Mongoose models under `apps/proxy/src/db/models/`), while the cloud plan specifies Postgres. That is a real rewrite cost sitting inside the "reuse Alexa account linking, portal shell" line, because the account linking is coupled to the Mongo user and token models.
 - Minor: the scope table lists Alexa and Siri, while the architecture diagram says "Alexa skill, Google Home later" and omits Siri. One of the two is out of date.
 - Minor: release numbering is inconsistent. The scope tables say "MVP / Second release / Release 3 / Release 4" while the milestones section uses M0 to M5. Suggest unifying on milestone numbers everywhere.

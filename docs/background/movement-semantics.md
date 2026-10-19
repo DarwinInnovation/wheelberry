@@ -4,7 +4,7 @@
 >
 > Written between 11 and 18 October 2026 for a larger, funded version of Wheelberry, and moved here on 19 October 2026. The live plan is [`../plan.md`](../plan.md) and it supersedes this document. Nothing here is known to be wrong; it is ahead of where the project is.
 >
-> **What it is worth later:** the source of the five safety rules in plan.md, plus the full analysis for when unattended movement, timed presets and AI control return. Needed sooner than the rest: it is where the accessible-input question is worked through.
+> **What it is worth later:** the source of the five safety rules in plan.md, and — as of 19 October — of the conditions on timed runs, which are now in the proof of concept. **M-PRESET below is live**, in the reduced form plan.md states; the rest of this document, including M-UNATTENDED and the AI rules, is not. Still holds the full analysis for when unattended movement and AI control return.
 
 Second revision, 17 October 2026. The first revision proposed options; Richard decided all six questions the same day, and this revision implements those decisions rather than re-arguing them. First workstream out of [spec-review.md](spec-review.md).
 
