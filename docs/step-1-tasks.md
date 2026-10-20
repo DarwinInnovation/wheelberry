@@ -1,6 +1,8 @@
 # Step 1: the hub drives the chair
 
-19 October 2026. The task list for step 1 of [`plan.md`](plan.md), as work rather than as a milestone.
+19 October 2026, amended 20 October. The task list for the first milestone of [`plan.md`](plan.md), as work rather than as a milestone.
+
+**On numbering:** the four "steps" became six milestones on 20 October, in [`roadmap.md`](roadmap.md). This list is [milestone 1](roadmap.md#milestone-1--the-chair-moves-from-a-phone); where it says "step 2" it means milestone 2, and where it says "step 4" it means milestone 6, the month in the home. Task numbers 1–15 are unchanged and are referred to from elsewhere, so they stay as they are.
 
 Grounded in the actual code: `DarwinInnovation/wheelberry_dongle_http_test_site` at `73aed15` (8 October 2026), its `README.md` and `docs/test_server_tech_overview.md`. Read before this list was written, which is why the list is shorter than expected.
 
@@ -27,10 +29,22 @@ So step 1 is **verify it on a chair, then close the gaps**. Not weeks of buildin
 Nobody in the chair. Wheels off the ground or the chair on blocks.
 
 1. **Axis mapping, and how long a full travel takes.** Drive all six outputs; check each one moves the axis its name claims, in the direction its icon claims. **Time each axis end to end while you are there** — it is free now and it is the number [task 14](#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet) has to be set above, because a cap shorter than a legitimate full-travel hold would cut ordinary hold-to-run off mid-move. **Expect 20 to 40 seconds for the slowest axis** — that is recollection, not measurement, and it is written here so the measurement has something to disagree with: a time well outside that range is more likely a mis-mapped output or a chair configured differently than a surprising actuator. *Done when:* `config.yaml`'s action names match the physical axes, verified one at a time, anything mislabelled is fixed in config rather than remembered, and there is a travel time written down per axis. Note that the footrest and the toggles are **analogue** actions on the shared `ring` channel, not digital outputs — the cap has to cover those two enables as well as the six digital channels.
-2. **The failsafe, broken six ways, each mid-move.** Release the button; switch browser tab; put the phone in flight mode; pull the USB cable; `kill -9` the server; pull power from the Pi. *Done when:* every one of the six stops the axis, and each result is written down — including any that stop slower than expected.
+2. **The failsafe, broken seven ways, each mid-move.** Release the button; switch browser tab; put the phone in flight mode; pull the USB cable; `kill -9` the server; pull power from the Pi; **press the chair's own LiNX power button.** *Done when:* every one of the seven stops the axis, and each result is written down — including any that stop slower than expected. The seventh is new as of 20 October and has its own notes below, because it is the one a carer will actually use.
 3. **Measure the stop, once.** Video at 60 fps is enough: frames from release to axis stationary. *Done when:* there is a number on paper to compare against the 300 ms watchdog. One measurement, not a programme — but an assumed number is not evidence.
 4. **The chair's own switch.** One chair button, through the input module, triggering one action. *Done when:* it fires reliably, and the 4 s default LOW hold is tuned to something a person can actually do on purpose but not by accident.
 5. **The LiNX range is the real limit.** *Done when:* driving an axis to its end from Wheelberry stops exactly where the chair's own controls stop — confirming rule 4, that the chair's configured range is in force and Wheelberry cannot exceed it.
+
+### The chair's own power button
+
+Added 20 October. LiNX chairs have a power button that **carers and family already know about**, and pressing it stops any movement at once. That makes it the best stop in the system by some distance — it is labelled, it is where everybody expects it, it is in the household's muscle memory already, and it owes nothing to Wheelberry, the hub, the dongle, the network or the Pi. It is now named in safety rule 5 in [`plan.md`](plan.md#the-safety-rules--all-of-them) in place of the vaguer "and power".
+
+Three things to establish on the bench rather than assume, all cheap while the chair is already wired:
+
+- **Does it stop mid-travel, immediately?** Press it with an axis halfway through its travel. A power-down that finishes the move first, or takes a second to act, is a different and much weaker thing than an instant stop, and the difference decides how much this can be relied on.
+- **What happens to the dongle?** If the dongle is powered from the chair it dies with it, which is clean. If it is powered separately, then **the dongle carries on asserting an output into a chair that is now unpowered** — and the output module's own documentation lists exactly this as untested: "power removal with the receiver still powered" and "the receiver's interpretation of high impedance", with the analogue switch's signal-path protection specified only to ±5.5 V. It is very likely harmless. It stops being an edge case the moment we start *telling* carers to use that button as the stop, so it should be looked at once, deliberately. *Done when:* the chair has been powered off mid-move at least ten times with the dongle still live, and nothing in the chair or the dongle has misbehaved afterwards.
+- **Who can actually reach it?** It is on the chair's own control module. Richard can reach his; Mike, who cannot reliably hold a control, may not be able to press his. So it is a **bystander's stop, not the user's stop.** Keeping that distinction is what stops safety rule 1 being quietly weakened into "well, someone could always hit the power button" — see the warning in `plan.md`.
+
+One deliverable follows from it, and it is the sort of thing an engineering project skips: **a short card for family and carers that says how to stop the chair.** One side of one page, on the wall or in the drawer, naming the power button first. It costs an afternoon and it is worth more to the people in the room than any of the firmware work.
 
 ## Phase 2 — the observed check
 
@@ -106,7 +120,9 @@ Grounded in `DarwinInnovation/firmware_wheelberry_output_module` at `ade948d`, `
 | So the resend loop feeds it | The hub sends `m=300` every 100 ms. That *is* the 300 ms watchdog — correct, and exactly why it cannot also be the cap |
 | Nothing accumulates | No channel records how long it has been energised |
 
-One thing found while reading, worth recording because it is a sharp edge rather than a bug today: **the expiry callback toggles the channel rather than forcing it off** (`apply_digital(idx, !dig[idx].logical_val)`). A *deassert* carrying a non-zero timeout would therefore schedule an *assert*. The hub sends `D:n:0:0` on release, so this is not live — checked, not assumed — but the cap below must force off and never toggle.
+One thing found while reading: **the expiry callback toggles the channel rather than forcing it off** (`apply_digital(idx, !dig[idx].logical_val)`). A *deassert* carrying a non-zero timeout would therefore schedule an *assert*. The hub sends `D:n:0:0` on release, so this is not live — checked, not assumed — but the cap below must force off and never toggle.
+
+**As of 20 October this has a cause and a proper fix.** It is the v1 push-pull hardware's symmetry surviving into v2's open-drain output stage, where the only two states are asserted and released. It is [task 15](#15-the-open-drain-change-what-on-means-on-v2-hardware), it should be done in the same pass as this task, and it matters more than "a sharp edge" suggested: the toggle is also why the 300 ms failsafe is implemented as something other than what the hub's documentation says it is.
 
 **The design.** Per channel, a compile-time maximum continuous energise time:
 
@@ -134,6 +150,42 @@ One requirement that falls out of reading the hub, and it is about feedback rath
 *Done when:* a channel held by a continuous 100 ms resend releases at the cap and stays released until an explicit off — proved first in the firmware repo's existing host regression harness, which runs the real output-control code against mocks and already covers tick wraparound, and then once on the bench.
 
 **It does not replace [task 9](#9-two-controllers-at-once-safety).** The cap is seconds and comes from outside the hub; a stop someone in the room presses has to be milliseconds and comes from inside it. The cap is what makes task 9's failure survivable, not what makes it unnecessary.
+
+**Do it in the same pass as [task 15](#15-the-open-drain-change-what-on-means-on-v2-hardware).** Both are in `Src/output_control.c`, both are about what "on" means, and the cap's "timed from the OFF→ON transition" only becomes exact once "on" means *asserted* rather than *`logical_val` happens to be 1*. One firmware change, one run of the host harness, one bench visit.
+
+### 15. The open-drain change: what "on" means on v2 hardware
+
+Added 20 October, from Richard: **v1 of the dongle was push-pull, so being able to drive an output either way made sense. v2 is open-drain, so the firmware can be clear about which state is active and which is not.** Grounded in `firmware_wheelberry_output_module` at `ade948d` — `Src/output_control.c` and `docs/technical-overview.md`, read rather than remembered.
+
+**What the hardware actually does now.** Six low-side 2N7002E MOSFETs with external gate pull-downs. MCU `HIGH` turns the MOSFET on and pulls the connector signal `LOW` — that is *active*. MCU `LOW` releases the connector to high impedance and the chair provides its own inactive bias — that is *inactive*. The two analogue channels are the same shape: a TMUX2821 switch that connects or **isolates**, so a disabled analogue output is isolated rather than driven to zero.
+
+One distinction to keep straight, because it is where the confusion comes from: **the MCU pin is still push-pull; it is the output stage at the connector that is open-drain.** The firmware's job is to stop describing the connector in terms of the pin.
+
+**So the two states are no longer symmetric, and the firmware still assumes they are.** On v1 both states were driven, so a channel genuinely had "a value", and a timeout that reverted a channel to *the other value* was coherent. On v2 there is only **assert** and **release**, and the only correct thing to do when a timeout expires is release.
+
+Today the firmware does not do that. It toggles:
+
+```c
+static void timer_cb_digital(ULONG idx) { ... apply_digital((uint8_t)idx, !dig[idx].logical_val); }
+static void timer_cb_analog (ULONG idx) { ... apply_analog(idx, ana[idx].millivolts, !ana[idx].enable); }
+```
+
+**This is the sharpest thing in the task list, and it is worth being precise about why.** The hub's `config.yaml` and its tech overview both say the module "auto-deasserts the output if it does not hear from us" — and the whole 300 ms failsafe, safety rule 2, and every claim this project makes about hold-to-run rest on that sentence. The firmware does not implement it. It implements a toggle, which *coincides* with deassert in the one case the hub currently exercises: an assert carrying `m=300`. A deassert carrying a non-zero timeout would schedule an **assert** — the firmware would turn an output on because a release timed out.
+
+So the documented failsafe is true by luck rather than by construction, and the luck is held in place by one line in the hub. That is the v1 symmetry surviving into v2 hardware, and it is exactly what Richard's point identifies.
+
+**The change.**
+
+1. **One vocabulary: assert and release.** `logical_val` becomes something like `asserted`; the protocol's `v=1` is documented as *assert (connector pulled low)* and `v=0` as *release (connector high-impedance; the chair biases it)*. Wire format unchanged.
+2. **Timeout means release, not toggle.** Both callbacks call a release, never a negation. The documented behaviour and the implemented behaviour become the same sentence.
+3. **One `release_channel()` and one `release_all()`, used by every path that ends in "stop".** There are three spellings of release in the firmware today and they do not agree: `output_control_fault_stop` writes GPIO `RESET` directly without touching RTOS state; `output_control_set_connected` calls `apply_digital(i, 0)` and drops the enables; the timer callback toggles. After this change, the fault stop, the disconnect path, the timeout expiry and **task 14's cap latch** are four callers of the same two functions. That is the real prize here — the project's safety story is four paths all ending in "release everything", and it should be one piece of code, not four.
+4. **Say what inactive *is*, in the overview.** On v2, inactive is a *passive* state: it is what you get by doing nothing, and it is what the hardware gives you unpowered, via the gate pull-downs and the analogue switch's powered-off isolation. A firmware whose vocabulary is assert/release can express that. One whose vocabulary is "the other value" cannot.
+
+**It is compatible with today's hub, so it can go in without touching the Python.** The hub sends `v=1, m=300` while a button is held and `v=0, m=0` on release — verified 19 October — so no live command's behaviour changes. What changes is that a future caller which sent a non-zero `m` with a release gets a safe outcome instead of a surprising one, and that `m` can finally be described as "release after this long" rather than "do something else after this long".
+
+*Done when:* the host regression harness proves that a timeout on a **released** channel leaves it released (the case that is currently wrong), that a timeout on an asserted channel releases it (the case that currently works by accident), and that fault stop, disconnect and cap latch all land in the same release path. Then once on the bench, with the status query confirming the channel reads as inactive.
+
+*Not in this task:* any change to the v1 boards. If any v1 dongle is still in use anywhere, releasing instead of driving the inactive level is a behaviour change on that hardware — worth one sentence of confirmation before this is merged, and the answer is probably "none in use".
 
 ## Also in step 1, but not gating it
 

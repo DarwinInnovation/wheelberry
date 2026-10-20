@@ -1,10 +1,8 @@
 # Wheelberry: the plan
 
-Proposed 19 October 2026 after a restart, and **adopted the same day** with five decisions: the proof of concept moves a seat *and* controls home devices; the first two trial users are named; the licence is Apache-2.0; the earlier documents are parked in [`background/`](background/); and the hub grows from the existing Python test site rather than being rewritten.
+Proposed 19 October 2026 after a restart, adopted the same day, and amended on 20 October. Everything settled so far is listed at the end, in [Decisions](#decisions) — this document states the current position rather than retelling how it was reached.
 
-Five more the same afternoon: the bench observer is named; **timed runs are back in**, so seating is not limited to people who can hold a control; the hardware licence is deferred and the PCB repository stays private; the hub and firmware publish once the observed bench check has passed; and the personal email address has been rewritten out of this repository's history.
-
-Four more that evening, and one of them moves real work: **Mike cannot reliably hold a control**, so timed runs are on step 2's critical path rather than waiting for a recruited tester; the firmware's per-channel timeout turns out to be the watchdog rather than the energise cap timed runs need; the entity is **Darwin Innovation Ltd**; and the email address stays in `bedberry`. See [Settled on 19 October](#settled-on-19-october).
+**Three things changed on 20 October**, on Richard's feedback, and two of them change what gets built: the chair's own **power button** is now the headline stop and is named in the safety rules; **voice and AI control are in scope** rather than being destinations, with their own milestones; and the output firmware needs the **open-drain change** that v2 hardware has been waiting for. The development path they all feed into is now a separate document, [`roadmap.md`](roadmap.md).
 
 **This is the plan.** It supersedes everything in `background/`, which describes a different and much larger project — see [What is parked](#what-is-parked) at the end.
 
@@ -14,7 +12,9 @@ Wheelberry is an open-source project with no users yet. The plan is therefore on
 
 > Wheelberry gives disabled people simple, safe and secure control of the technology around them, from wheelchair seating and beds to lights, heating and Home Assistant, using whichever method suits them: touch, voice, phone or AI assistant. Users shape their own setup, with carers and support teams helping through a shared management portal. Wheelberry is open source and affordable, so it works with what people already own. Wheelberry does not drive wheelchairs; it controls seating and the environment around the user.
 
-Agreed 11 October 2026 and still right. Two things in it are *destinations*, not part of this plan: the **shared management portal** and the voice and AI channels. They stay in the mission because they are where this goes. They are not built here.
+Agreed 11 October 2026 and still right. One thing in it is a *destination* rather than part of this plan: the **shared management portal**, which needs accounts, roles and remote access, and is where the parked data-protection work becomes live.
+
+**Voice and AI used to be on that list and are not any more.** Richard's judgement, 20 October: they are *very* important, and they are what will attract users. So they are on the path with their own milestones — [milestone 4](roadmap.md#milestone-4--ask-for-it-out-loud) and [milestone 5](roadmap.md#milestone-5--an-ai-assistant-can-use-it) — for the lights, the heating and the rest of the room. They stop short of moving the chair in the proof of concept, for one reason given [below](#voice-and-ai-are-in-the-chair-is-the-exception).
 
 ## What we are proving
 
@@ -56,13 +56,29 @@ Not "disabled people" as a category: two named people with their own chairs and 
 | One accessible screen | A web page on the home network. Few, large targets. Any input method reaches everything, including seating: held inputs by hold-to-run, dwell and scanning by [timed runs](#timed-runs-and-what-they-cost) | Without this the rest is unreachable, which is the entire point of the project |
 | The chair's own switches | The existing input module, so a chair button can trigger a Wheelberry action. **Already built** | Cheapest accessible input there is: it is already mounted where they can reach it |
 | Works with no internet | The hub is in the home and needs nothing outside it | A light switch that depends on a cloud is not a light switch |
-| A passcode on the hub | One shared secret per hub, no accounts, no roles | Today anyone who can reach the port can move the chair. Required before step 4, not before step 1 |
+| **Voice, for the room** | Ask out loud for the lights, the heating, the fan. Not the chair | **In as of 20 October.** For some users speech is the most reliable input they have, and for everyone it is the fastest. It is also the feature that makes people want this |
+| **AI over MCP, for the room** | An assistant can see the devices, read their state and switch the non-movement ones | **In as of 20 October.** Handles what a button cannot — "it's cold in here", "I'm going to bed" — and it is how a stranger gets interested enough to contribute |
+| A passcode on the hub | One shared secret per hub, no accounts, no roles | Today anyone who can reach the port can move the chair. Required before the month in the home, not before the first move |
 
 **Out — for now, deliberately**
 
-Cloud and remote access. The management portal. Alexa, Siri, Google. The MCP server and AI control. Phone app. Beds and hoists. Multi-home and organisational management. Per-user permission matrices. Audit retention policy. Anything with the word "platform" in it.
+Cloud and remote access. The management portal. **Voice or AI that moves the chair.** Phone app. Beds and hoists. Multi-home and organisational management. Per-user permission matrices. Audit retention policy. Anything with the word "platform" in it.
 
 Each of these is a good idea with a worked-out design already sitting in [`background/`](background/). None is needed to find out whether a disabled person can tilt their own chair.
+
+### Voice and AI are in; the chair is the exception
+
+Decided 20 October. Voice and AI reach everything in the room and stop at the chair, and the reason is a single line that is already the backbone of the safety rules:
+
+> Every movement of a person needs something able to stop it for the whole of the move. A cloud assistant cannot be that thing — the round trip is seconds, and seconds is not a stop.
+
+Three things worth knowing about that boundary:
+
+- **It is temporary, and it is already costed.** Voice- and AI-driven movement is [milestone 7](roadmap.md#beyond-the-proof-of-concept). The analysis exists in [`background/movement-semantics.md`](background/movement-semantics.md), which treats an assistant as *nobody being present* and works out what has to be true for that to be acceptable. What is ruled out is only the easy version: bolting the seating controls onto Alexa next to the lights.
+- **The real split is local versus cloud, not voice versus touch.** An on-hub recogniser answers in milliseconds and could carry a stop; a cloud assistant cannot. So the voice path chosen at milestone 4 is what decides how far away milestone 7 is — and local voice, deferred on 17 October under a much larger plan, is worth looking at again now that the second user cannot hold a control. It is an open question in [`roadmap.md`](roadmap.md#open-questions).
+- **Refusals must be loud.** A user who says "tilt me back" and gets silence will repeat themselves, then conclude the system is broken. "Wheelberry can't move your chair by voice" has to be *said*. That is in milestone 4's done-when, not a nicety.
+
+The attractive half of this is that **none of the movement safety apparatus applies to a light.** Milestones 4 and 5 are small precisely because they stay on the non-movement side of the line, which is why they are affordable in a proof of concept at all.
 
 ## The safety rules — all of them
 
@@ -72,11 +88,25 @@ Seating moves a person's body. That cannot be cut down, so it is stated in five 
 2. **The watchdog is in the firmware.** The output module releases every output if commands stop arriving — 300 ms, already built, already unit-tested. No timing-critical safety logic lives in the hub, though the 300 ms itself is a number the hub sends rather than one the firmware keeps. It is a complete backstop for hold-to-run and **not** for a timed run; see below, because that is the one place the restart's safety story needed new work rather than less.
 3. **Nothing moves unattended.** No schedules, no automations, no routines that move a person. A timed run is *attended* — the user is there with their finger, eye or switch on the stop — and reopening it does not reopen schedules.
 4. **The chair's own limits stay in force.** Range is set in LiNX at installation by the installer, with the user's clinician. Wheelberry cannot exceed it and never claims to enforce a position it cannot measure — there is no position sensing.
-5. **The user can always stop it, and so can anyone in the room.** The stop control, the chair's own controls, and power.
+5. **The user can always stop it, and so can anyone in the room.** The stop control on the screen, the chair's own seating controls, and — the one everybody already knows — **the chair's own power button.**
 
 Those five hold from the first time a chair moves. Four of them are cheap because the firmware already does the hard part. Rule 1's second mode is the one that costs something, and the next section is why.
 
-**Rule 5 is the one the code does not yet honour.** Two phones can hold the same output, and one releasing does not stop the other's command stream — so "anyone in the room can stop it" is currently true of the chair's own controls and of the power, but not of Wheelberry. It is task 9 in [`step-1-tasks.md`](step-1-tasks.md): a small fix, stated in the rules as though already true, and now also a precondition for timed runs rather than only a tidy-up.
+**Rule 5 is the one the code does not yet honour.** Two phones can hold the same output, and one releasing does not stop the other's command stream — so "anyone in the room can stop it" is currently true of the chair's own controls and of its power button, but not of Wheelberry. It is task 9 in [`step-1-tasks.md`](step-1-tasks.md): a small fix, stated in the rules as though already true, and now also a precondition for timed runs rather than only a tidy-up.
+
+### The chair's own power button
+
+Added 20 October, and it is the strongest safety fact in the project: **LiNX chairs have a power button that carers and family already know about, and pressing it stops any movement instantly.**
+
+It is better than anything we could build. It is labelled, it is where everyone expects it, it is already in the household's muscle memory, and it depends on nothing of ours — not the hub, the dongle, the network, the Pi, the firmware or the Wi-Fi. Every other stop in this project is something we have to make work; this one already works. It replaces the vaguer "and power" that rule 5 used to end with, and it is the first thing the carer card in [`step-1-tasks.md`](step-1-tasks.md#the-chairs-own-power-button) should name.
+
+What it changes, honestly:
+
+- **It strengthens the case for timed runs**, which is where it matters most. A timed run's backstop used to be a 90-second firmware cap and the user's own stop. Now there is also a one-press instant stop that any family member or carer in the room already knows how to use, with no training and no Wheelberry involved. That is a materially better story to take to a clinician.
+- **It does not excuse task 9, and it does not excuse the cap.** This is the trap, and it is worth naming because it is the most natural mistake available here: "there's a power button" is a comfortable reason not to finish the software stop. It is the wrong reason. The power button handles *someone noticing*; task 9 and the cap handle *nobody noticing*, which is the case that actually hurts people. The cap exists for a stuck output at 3 a.m. with the user asleep, and a button nobody presses is not a stop.
+- **It is a bystander's stop, not the user's stop.** It is on the chair's own control module. Richard can reach his. Mike, who cannot reliably hold a control, may not be able to press his — and a user alone at 2 a.m. is the entire premise of this project. So it does not relieve rule 1 of anything: the user still needs a stop reachable by their own input method, for the whole of every move.
+
+Three things to check on the bench rather than assume — including what happens to a dongle still asserting an output into a chair that has just been powered off, which the output module's own documentation lists as untested. They are [in phase 1](step-1-tasks.md#the-chairs-own-power-button), and they are free while the chair is already wired up.
 
 Beyond them: before any trial user sits in a moving chair, **Ben Miller-Smith** watches it move through its whole range, repeatedly, with the power pulled at random points. Not an independent safety review with a report — one afternoon, a bench, and a second pair of eyes.
 
@@ -122,14 +152,22 @@ What is still unknown is what Mike *can* do — dwell, scanning, a switch tap, s
 
 ## Build order
 
-Four steps. Each one ends with something that works in front of a person.
+**The development path is now its own document: [`roadmap.md`](roadmap.md).** Written 20 October on Richard's request for a clear path with milestones, each in plain English with an example of what a person can actually do once it is finished. It is the authoritative sequence; this section is the summary.
 
-1. **The hub drives the chair — largely built already.** The Python test site does hold-to-run on six seating outputs over a WebSocket today, with the 300 ms firmware watchdog, a 100 ms resend, release on pointer-up, tab switch, network loss and power loss, a systemd unit, and a `--test` mode that runs with no hardware attached. The chair's own switches are in it too. So step 1 is to **verify that on a chair and close a short list of gaps**, not to build it — the list is in [`step-1-tasks.md`](step-1-tasks.md). Done when: Richard can tilt a chair from a phone, and pulling the USB cable mid-move stops it.
-2. **The screen becomes usable by the second user.** Mike's input method, Mike's layout, Mike's words. Built with them, not for them. **Mike cannot reliably hold a control, so this is also where [timed runs](#timed-runs-and-what-they-cost) are built, observed and enabled** — the firmware cap first, then the mode, then a second session with Ben. That makes step 2 the longest of the four, and the one where the safety work actually is. Done when: they do it unaided, twice, without being shown how.
-3. **The home devices join.** Lights and heating alongside the seating, in one layout, same screen. Done when: one action list covers the chair and the room.
-4. **It lives in their home for a month.** Installed, unsupervised, with a way to tell us when it breaks. Done when: we have a month of their experience and know what to build next. The hub needs a passcode before this step: a home network is not a trusted network, and today anyone who can reach the port can move the chair.
+Six milestones. Each one ends with something that works in front of a person.
 
-No dates. **Step 1 is days of verification rather than weeks of building** — the single biggest change the restart produced, and it came from reading the existing code rather than from planning. Steps 2 and 4 are gated by another person's diary, not by us.
+| | Milestone | Done when | Gated by |
+| --- | --- | --- | --- |
+| 1 | [The chair moves from a phone](roadmap.md#milestone-1--the-chair-moves-from-a-phone) | Richard tilts the chair from a phone, and pulling the USB cable mid-move stops it | Ben's bench afternoon. Mostly already built |
+| 2 | [The screen works for someone who did not build it](roadmap.md#milestone-2--the-screen-works-for-someone-who-did-not-build-it) | Mike moves his own seat unaided, twice, without being shown | Mike's input method; a clinician; the firmware work |
+| 3 | [The lights and the heating join in](roadmap.md#milestone-3--the-lights-and-the-heating-join-in) | One action list covers the chair and the room | Nothing but milestone 1 |
+| 4 | [Ask for it out loud](roadmap.md#milestone-4--ask-for-it-out-loud) | A user switches two devices by voice first time, in their own words — and a chair request is refused out loud | Which voice path (open question) |
+| 5 | [An AI assistant can use it](roadmap.md#milestone-5--an-ai-assistant-can-use-it) | An assistant completes a plain-English household request, every action visible afterwards | Milestone 3. Small |
+| 6 | [It lives in their home for a month](roadmap.md#milestone-6--it-lives-in-their-home-for-a-month) | A month of someone's actual life, and an answer to "would you keep it?" | Milestones 2 and 3, the passcode, a repeatable install |
+
+Milestones 4 and 5 are new as of 20 October and are the two that changed the shape of this plan. **The old four steps map onto 1, 2, 3 and 6** — where documents here or in `step-1-tasks.md` still say "step 4", they mean the month in the home.
+
+No dates. **Milestone 1 is days of verification rather than weeks of building** — the single biggest change the restart produced, and it came from reading the existing code rather than from planning. Milestones 2 and 6 are gated by another person's diary, not by us.
 
 ## Open source, as a practice
 
@@ -203,30 +241,41 @@ So they are kept, not deleted, and not live. All six now sit in [`background/`](
 
 Nothing in them is contradicted by this plan. They are ahead of it.
 
-## Settled on 19 October
+## Decisions
 
-Trial users (named above), the hub's language (**Python**, growing the existing test site — the earlier spec's TypeScript choice is withdrawn), the software licence (**Apache-2.0**), the scope of the proof of concept (**seating and home control**), and where the old documents live (**`background/`**).
+**19 October.** Trial users (named above); the hub's language (**Python**, growing the existing test site — the earlier spec's TypeScript choice is withdrawn); the software licence (**Apache-2.0**); the scope of the proof of concept (**seating and home control**); where the old documents live (**`background/`**); the bench observer (**Ben Miller-Smith**); **timed runs in scope**, so seating is reachable by any input method; the **hardware licence deferred** with the PCB repository staying private; **publication gated on the observed bench check**; and the **email history rewritten**.
 
-Then, the same afternoon: the **bench observer** (Ben Miller-Smith), **timed runs in scope** so that seating is reachable by any input method, the **hardware licence deferred** with the PCB repository staying private, **publication gated on the observed bench check**, and the **email history rewritten**.
-
-And four that evening, of which the third moves the most work:
+Then, the same evening:
 
 | | Settled |
 | --- | --- |
 | The legal entity | **Darwin Innovation Ltd**, now the copyright line in `LICENSE` |
 | `bedberry`'s copy of the email address | **Left in place**, with the residual exposure stated above rather than quietly dropped |
-| **Mike cannot reliably hold a control** | Timed runs move onto step 2's critical path, and the chair's own switches do not substitute |
+| **Mike cannot reliably hold a control** | Timed runs move onto milestone 2's critical path, and the chair's own switches do not substitute |
 | The firmware energise cap | A per-channel timeout **exists but is not a cap** — the bound a timed run needs is new firmware work, scoped as task 14 |
 | Full travel, slowest axis | **20 to 40 s** from recollection, which sizes task 14's cap at a provisional 90 s per channel. Phase 1 measures it |
 | Task 14 and task 9 | **Specified and held.** Planning only until phase 1 has been done on a chair |
 
+**20 October**, on Richard's feedback:
+
+| | Settled |
+| --- | --- |
+| **The chair's own power button** | The headline stop, named in safety rule 5 — carers and family already know it, and it owes nothing to any of our code. Does **not** excuse task 9 or the cap, and is a bystander's stop rather than the user's |
+| **Voice and AI are in scope** | Milestones 4 and 5, for the room and not the chair. No longer destinations |
+| The open-drain firmware change | v1 was push-pull, v2 is open-drain, and the firmware still assumes the two states are symmetric. **Task 15**, to be done in the same pass as task 14 |
+| The development path | Its own document, [`roadmap.md`](roadmap.md) — six milestones in plain English, each with an example and a done-when |
+
 ## Open items
 
-- [ ] **Build the firmware energise cap** — [task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet). Answered on 19 October and the answer changed the job: the per-channel timeout exists, but it is the watchdog, re-armed by every resend, so the cap a timed run needs is new firmware work. Small, testable in the existing host harness, and the first thing in the timed-run chain. **Specified and held, not started** — along with task 9, the two-controller stop. Both are the only work here that waits on nobody, and both are held by choice until phase 1 has been done on a real chair, which is the right order: phase 1 produces the measured travel time the cap is sized from, and the bench check is what task 9 is a precondition for.
+- [ ] **Build the firmware energise cap, and the open-drain change with it** — [task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet) and [task 15](step-1-tasks.md#15-the-open-drain-change-what-on-means-on-v2-hardware). Same file, same question, so one change and one bench visit. **Specified and held, not started** — along with task 9, the two-controller stop. These are the only work here that waits on nobody, and they are held by choice until phase 1 has been done on a real chair: phase 1 produces the measured travel time the cap is sized from, and the bench check is what task 9 is a precondition for.
+- [ ] **Which voice path — cloud assistant or on-hub recogniser?** The question that decides how soon voice can ever reach the chair, since only a local recogniser could carry a stop. Local voice was deferred on 17 October under a much larger plan, and **Mike not being able to hold a control is a reason to reopen it.** Needed before milestone 4 starts, not before milestone 3 finishes.
+- [ ] **Do milestones 4 and 5 go in before the month in the home, or during it?** Before means the month tests the features we think attract users; during means the month starts sooner. `roadmap.md` currently assumes "before, unless it delays the month".
+- [ ] **Are any v1 dongles still in use anywhere?** One sentence, and it gates task 15: releasing an output instead of driving its inactive level is a behaviour change on push-pull hardware. The expected answer is no.
 - [ ] **What input method does Mike actually use?** He cannot reliably hold, which is settled. What he *can* do is not, and it sets the measured stop time, which sets the run-time cap, which sizes everything else. One conversation, and the slowest thing it unblocks.
 - [ ] **Run-time caps, and the whole-travel judgement per axis**, with Richard's seating clinician. Needed before timed runs are enabled, not before they are written.
-- [ ] **Who recruits testers, and through whom?** Starts now, in parallel with step 1, because it is the slowest thing on the list.
+- [ ] **A card for family and carers saying how to stop the chair**, naming the power button first. One side of one page. Costs an afternoon and is worth more to the people in the room than any of the firmware work.
+- [ ] **Who recruits testers, and through whom?** Starts now, in parallel with milestone 1, because it is the slowest thing on the list.
 - [ ] **Ask GitHub Support to purge the unreachable objects** in this repository, which is the only way to make the rewritten commits actually unfetchable. Lower value than it was, now that the same address stays readable in `bedberry` by choice.
 - [ ] **Can the screen actually be *installed* on the trial users' own tablets over plain HTTP?** A service worker needs a secure context, which a LAN address over HTTP is not. iOS add-to-home-screen works without one; Android Chrome's install prompt does not appear. Verify on the real device before promising anything offline — or drop "installable" and use a bookmarked full-screen page.
 - [ ] **Does the dongle or LiNX path expose motor current or stall detection?** With no position sensing, current is the only signal that something is trapped. Cheap to add while the board is still being revised.
-- [ ] **Which chair control systems beyond LiNX matter?** Both named users are on LiNX, so this is a question about recruitment, not about step 1.
+- [ ] **Which chair control systems beyond LiNX matter?** Both named users are on LiNX, so this is a question about recruitment, not about milestone 1. It is also the point where the chair's power button stops being something we can assume — it is a LiNX feature, and another system's stop may behave differently.
