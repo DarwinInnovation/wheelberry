@@ -34,6 +34,8 @@ Milestones 1 to 6 are the proof of concept. Everything after milestone 6 depends
 
 **Needs first.** Nothing from us. **This is mostly already built** — the existing Python hub does all of the above today, so milestone 1 is verification on a real chair plus a short list of gaps. The work is listed as phases 1 to 3 of [`step-1-tasks.md`](step-1-tasks.md). It is gated by one afternoon with Ben Miller-Smith watching, which is the gate on anyone sitting in a chair that Wheelberry moves.
 
+**One thing goes in ahead of it**, decided 20 October: the firmware pass, [tasks 14 and 15](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet). So phase 1 and Ben's afternoon exercise the firmware that will actually ship, rather than the version it replaces — one bench visit instead of two.
+
 ---
 
 ## Milestone 2 — The screen works for someone who did not build it
@@ -48,9 +50,9 @@ Milestones 1 to 6 are the proof of concept. Everything after milestone 6 depends
 
 **Needs first.** Milestone 1, and four things that are not a screen:
 
-- The **firmware energise cap** — a hard limit on how long any one output can stay live, built into the dongle rather than the hub ([task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet)).
-- The **open-drain firmware change** ([task 15](step-1-tasks.md#15-the-open-drain-change-what-on-means-on-v2-hardware)), done in the same pass.
-- The **two-controller stop** in the hub ([task 9](step-1-tasks.md#9-two-controllers-at-once-safety)), so that a stop stops everyone's commands and not just your own.
+- The **firmware energise cap** — a hard limit on how long any one output can stay live, built into the dongle rather than the hub ([task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet)). **Started**, as of 20 October, ahead of milestone 1.
+- The **open-drain firmware change** ([task 15](step-1-tasks.md#15-the-open-drain-change-what-on-means-on-v2-hardware)), in the same pass.
+- The **two-controller stop** in the hub ([task 9](step-1-tasks.md#9-two-controllers-at-once-safety)), so that a stop stops everyone's commands and not just your own. **Still held**, and it belongs before phase 3 rather than before milestone 2.
 - **Which axes may run on a timer**, judged by Richard's seating clinician, plus a second observed session with Ben.
 
 **This is the longest of the six**, and the one where the safety work actually is. The single thing still unknown is what Mike *can* use — dwell, scanning, a switch tap — because the measured time it takes him to stop a run is what sets how long a run is allowed to be.
@@ -79,9 +81,18 @@ Milestones 1 to 6 are the proof of concept. Everything after milestone 6 depends
 
 **For example.** Mike says "turn the bedroom light off." It goes off. He did not have to find a tablet, wake it, unlock it or aim at anything.
 
-**Done when.** A trial user turns at least two devices on and off by voice on their first attempt, using their own words — and a request to move the chair is **refused out loud and clearly**, not silently ignored.
+**Done when.** A trial user turns at least two devices on and off by voice on their first attempt, using their own words — and a request to move the chair **fails loudly rather than silently**, with the user left in no doubt that Wheelberry will not do it.
 
-**Needs first.** Milestone 3. The choice of voice path is still open, and it is the question that matters most here: a cloud assistant is less work and reaches devices people already own, while an on-hub recogniser keeps working with the internet down and sends nothing out of the house. See [Open questions](#open-questions).
+**Needs first.** Milestone 3, and **the hub passcode** ([task 10](step-1-tasks.md#10-a-passcode-now-before-milestone-4-not-milestone-6)), which moved here from milestone 6 for the reason below.
+
+**The path is decided: a cloud assistant first — Alexa or Google — not an on-hub recogniser.** Richard's decision, 20 October: least work, it reaches hardware people already own, and there is an existing Alexa skill to draw on. It also means voice-driven seating stays at milestone 7, because only a recogniser inside the house could ever carry a stop.
+
+Two consequences, and the first one costs something:
+
+- **A cloud assistant needs a route from the internet into the home.** Everything up to milestone 3 runs entirely on the home network, which is why "cloud and remote access" was an *out* item and why the honest answer to "what do you keep about me?" was "nothing — we never have it". An assistant is invoked by Amazon's or Google's servers, so milestone 4 brings an endpoint outside the house, account linking between their account and this hub, and **the first personal data Darwin Innovation holds.** The plan put that trigger after the proof of concept; this decision brings it inside it. It does not change the decision — it means milestone 4 is the first milestone with a data-protection step in it, and the controller analysis in [`background/audit-retention.md`](background/audit-retention.md) comes out of the parked pile when it starts. Nothing else in that document does.
+- **The refusal stops being ours to word.** The chair is not exposed to the assistant at all, which is already the rule for Home Assistant — so a user who says "tilt me back" gets "I can't find a device called chair" from Amazon, in Amazon's words, which is a refusal delivered by somebody else badly. A custom skill keeps the wording ours; a smart-home skill does not. That is a reason to prefer a custom skill, and until it is settled the done-when above asks for *no silent failure* rather than naming who speaks.
+
+**One question inside the decision, still open:** our own skill, or ride on Home Assistant's cloud? Nabu Casa already gives HA users Alexa and Google with no cloud code, no endpoint and no account linking of ours — the "we hold nothing" answer survives intact. But it only works where the user has Home Assistant, which cuts against the HA-free install that milestone 3 deliberately supports. Our own skill works for everyone and is where the existing Alexa work fits. It is in [Open questions](#open-questions), and it changes what milestone 4 *is*.
 
 ---
 
@@ -109,7 +120,9 @@ Milestones 1 to 6 are the proof of concept. Everything after milestone 6 depends
 
 **Done when.** A month of somebody's actual life has gone past, and we can say what they used daily, what they abandoned, and what broke — and they have answered one question plainly: **would you keep it?**
 
-**Needs first.** Milestones 2 and 3, the hub passcode ([task 10](step-1-tasks.md#10-a-passcode-before-step-4-not-before-step-1)), and a repeatable install. Milestones 4 and 5 are **not** required — if they are ready, they go in; if they are not, the month starts without them and voice gets its own month afterwards. That is a choice, and it is in [Open questions](#open-questions).
+**Needs first.** Milestones 2, 3, **4 and 5**, the hub passcode ([task 10](step-1-tasks.md#10-a-passcode-now-before-milestone-4-not-milestone-6)), and a repeatable install.
+
+**Voice and AI go in before the month, not during it** — Richard's decision, 20 October: if voice is what attracts users, the month should be testing it. That is the right call for the evidence and it has one cost worth stating plainly, because it is the cost of every "before": **this is the only milestone that produces an answer rather than a feature, and two more milestones now stand in front of it.** One of them, milestone 4, has an external dependency we do not control — a developer account and a skill submission sit in somebody else's queue. If that queue is what is holding up the month, that is the moment to ask whether the month should start anyway.
 
 ---
 
@@ -155,7 +168,7 @@ That is not a prohibition on voice-driven movement forever; it is milestone 7, a
 
 Two consequences worth knowing now:
 
-- **The split is by transport, not by whether it is "voice".** An on-hub recogniser answers in milliseconds and could carry a stop; Amazon's round trip cannot. So "can voice move the chair?" is really "is the recogniser in the house?", which is why the voice path chosen at milestone 4 decides how far away milestone 7 is.
+- **The split is by transport, not by whether it is "voice".** An on-hub recogniser answers in milliseconds and could carry a stop; Amazon's round trip cannot. So "can voice move the chair?" is really "is the recogniser in the house?" — and the cloud-first decision of 20 October answers it: **milestone 7 is as far away as a local recogniser is.** Nothing built at milestone 4 brings voice-driven seating closer, which is a fair price for reaching people on hardware they already own, but it should be a known price rather than a surprise later.
 - **Refusals have to be loud.** A user who says "tilt me back" and gets silence will say it again, louder, and then assume the system is broken. The refusal is a feature, and it is in milestone 4's done-when for that reason.
 
 ---
@@ -164,7 +177,6 @@ Two consequences worth knowing now:
 
 These change the order above, so they are worth answering before milestone 3 finishes rather than during milestone 4.
 
-- [ ] **Which voice path?** A cloud assistant (Alexa, Google) is less work and reaches hardware people already own. An on-hub recogniser keeps working with the internet down, sends nothing out of the house, and is the only route that could ever carry a stop. Local voice was deferred on 17 October under a much larger plan; **Mike not being able to hold a control is a reason to look at it again**, because for a user whose other inputs are slow, speech is not a convenience.
-- [ ] **Do milestones 4 and 5 go in before the month, or during it?** Before means the month tests the thing we think attracts users. During means the month starts sooner. Both are defensible; the plan currently assumes "before, unless it delays the month".
+- [ ] **Our own skill, or Home Assistant's cloud?** The one part of the voice decision still open, and it decides whether Darwin Innovation ends up holding personal data during the proof of concept or not. See [milestone 4](#milestone-4--ask-for-it-out-loud).
 - [ ] **What input method does Mike actually use?** The slowest unknown in the project. It sets the stop time, which sets the run-time cap, which sizes milestone 2.
 - [ ] **Who recruits trial users, and through whom?** Starts now, in parallel, because other people's time is the long lead item.
