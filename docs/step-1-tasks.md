@@ -30,7 +30,7 @@ Nobody in the chair. Wheels off the ground or the chair on blocks.
 
 1. **Axis mapping, and how long a full travel takes.** Drive all six outputs; check each one moves the axis its name claims, in the direction its icon claims. **Time each axis end to end while you are there** — it is free now and it is the number [task 14](#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet) has to be set above, because a cap shorter than a legitimate full-travel hold would cut ordinary hold-to-run off mid-move. **Expect 20 to 40 seconds for the slowest axis** — that is recollection, not measurement, and it is written here so the measurement has something to disagree with: a time well outside that range is more likely a mis-mapped output or a chair configured differently than a surprising actuator. *Done when:* `config.yaml`'s action names match the physical axes, verified one at a time, anything mislabelled is fixed in config rather than remembered, and there is a travel time written down per axis. Note that the footrest and the toggles are **analogue** actions on the shared `ring` channel, not digital outputs — the cap has to cover those two enables as well as the six digital channels.
 
-   **Measured, 21 October — the travel-time half of this task is done.** Richard, end to end, chair empty:
+   **Done, 21 October — both halves.** Richard, end to end, chair empty:
 
    | Axis | Travel | Channels it drives |
    | --- | --- | --- |
@@ -47,19 +47,24 @@ Nobody in the chair. Wheels off the ground or the chair on blocks.
 
    **The recollection was high, and wrong in the safe direction.** 20 to 40 s was
    written here so the measurement had something to disagree with; the slowest axis
-   is **17.6 s**, below even the bottom of that range. Taken with task 5 — the LiNX
-   range is in force and Wheelberry cannot exceed it — a slowest axis under 20 s is
-   consistent with correctly mapped outputs on a chair configured to a narrower
-   range than remembered, not with a mis-mapped output. What it changes is
-   [task 14](#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet)'s
-   sizing, recorded there.
+   is **17.6 s**, below even the bottom of that range. This task named the two
+   candidate explanations for a time well outside the range: a mis-mapped output, or
+   a chair configured differently. **The mapping is now confirmed and the first is
+   ruled out**, so what remains is a chair configured to a narrower LiNX range than
+   remembered — which shortens every travel with nothing wrong. Task 5 is the check
+   that that range is in force.
 
-   **Two things this measurement is not**, both of which the cap's margin absorbs:
-   it is one number per axis rather than per direction (down is gravity-assisted and
-   should be the faster of the two), and it is the empty chair, which is the faster
-   case. **Still open from this task:** the axis-mapping half — each output moving
-   the axis its name claims, in the direction its icon claims, verified one at a
-   time — is not recorded as confirmed by the timings alone.
+   **Axis mapping confirmed, 21 October.** Richard verified all six digital outputs
+   and both footrest axes one at a time: each output moves the axis its name claims,
+   in the direction its icon claims. Nothing in `config.yaml` needed relabelling.
+   That closes the half of this task the timings could not settle on their own.
+
+   **Two things this measurement is not:** it is one number per axis rather than per
+   direction (down is gravity-assisted and should be the faster of the two), and it
+   is the empty chair, which is the faster case. Both mattered less at the 90 s cap
+   than they do now — see
+   [task 14](#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet), where
+   the cap is 30 s and the **loaded** travel time is the open number.
 2. **The failsafe, broken seven ways, each mid-move.** Release the button; switch browser tab; put the phone in flight mode; pull the USB cable; `kill -9` the server; pull power from the Pi; **press the chair's own LiNX power button.** *Done when:* every one of the seven stops the axis, and each result is written down — including any that stop slower than expected. The seventh is a confirmation rather than a question — Richard confirms it is instant — and it continues into the power-on test below, which is the part nobody has done.
 3. **Measure the stop, once.** Video at 60 fps is enough: frames from release to axis stationary. *Done when:* there is a number on paper to compare against the 300 ms watchdog. One measurement, not a programme — but an assumed number is not evidence.
 4. **The chair's own switch.** One chair button, through the input module, triggering one action. *Done when:* it fires reliably, and the 4 s default LOW hold is tuned to something a person can actually do on purpose but not by accident.
@@ -74,7 +79,7 @@ Added 20 October. LiNX chairs have a power button that **carers and family alrea
 - **The untested condition is now the normal one.** With the dongle still live, it carries on asserting an output into a receiver that has just lost power — and the output module's own documentation lists exactly that as untested: "power removal with the receiver still powered" and "the receiver's interpretation of high impedance", with the analogue switch's signal-path protection specified only to ±5.5 V. It is very likely harmless. It is no longer an edge case, because we are about to start *telling* carers to use that button. *Done when:* the chair has been powered off mid-move at least ten times with the dongle still live, and nothing in the chair or the dongle has misbehaved afterwards.
 - **The move resumes when the chair is switched back on.** Nothing tells the hub the chair has gone: it keeps asserting every 100 ms for as long as something is holding the control, and there is no sensing anywhere on the dongle that could tell it otherwise — the output module firmware makes no application use of the ADC, checked 20 October. So the sequence is: press power, the chair stops, press power again, **and the axis carries on from where it stopped.** That is a prediction from the design rather than an observation, and confirming it is part of the ten presses above: press power mid-move *with the control still held*, then power the chair back on, and write down what the chair does.
 
-  Why it matters more than it sounds: **the power button is a stop, not a reset.** The fix is not in the hub — the hub cannot learn that the chair is off — so it is two lines on the carer card and task 14's cap as the backstop beyond 90 s. Worth knowing before the card is written rather than after.
+  Why it matters more than it sounds: **the power button is a stop, not a reset.** The fix is not in the hub — the hub cannot learn that the chair is off — so it is two lines on the carer card and task 14's cap as the backstop beyond 30 s. Worth knowing before the card is written rather than after. **The card is the remedy and the cap is only the backstop**, and the 21 October measurement makes that ordering firmer rather than looser: at a 17.6 s slowest travel, a move that resumes inside the cap window completes its remaining travel whatever the cap is set to. Tightening the cap from 90 s to 30 s shortens the window in which a resume can start; it does not stop one that starts inside it. **Note for the ten presses: switch the chair back on within 30 s**, or the cap will have latched the channel off and there is no resume to observe.
 - **Who can actually reach it?** It is on the chair's own control module. Richard can reach his; Mike, who cannot reliably hold a control, may not be able to press his. So it is a **bystander's stop, not the user's stop.** Keeping that distinction is what stops safety rule 1 being quietly weakened into "well, someone could always hit the power button" — see the warning in `plan.md`.
 
 One deliverable follows from it, and it is the sort of thing an engineering project skips: **a short card for family and carers that says how to stop the chair.** One side of one page, on the wall or in the drawer, naming the power button first — and, because of the point above, saying what to do next: *let go of the control, or press stop on the screen, before you switch the chair back on.* It costs an afternoon and it is worth more to the people in the room than any of the firmware work.
@@ -154,14 +159,16 @@ Two consequences of building before the bench rather than after it:
 
 - **The cap ships unmeasured.** 90 s stands as the shipped constant and task 1's measurement validates it rather than setting it. Re-sizing afterwards is one constant and a re-run of the host harness. The single outcome that needs action is a slowest axis above 45 s, which would put 90 s below the travel × 2 floor below — raise the constant before anyone relies on the cap.
 
-  **Measured 21 October: the cap is validated and nothing needs to change.** Slowest
-  axis **17.6 s** (backrest), against the 45 s threshold that would have forced a
-  raise — see [task 1](#phase-1--bench-chair-empty) for the per-axis table. 90 s is
-  5.1× the slowest travel and 2.6× the travel × 2 floor. Two corrections to this
-  bullet, found while applying it: re-sizing is **two** edits rather than one
-  constant, because `test/output_control_test.c` asserts
-  `ENERGISE_CAP_TICKS == 9000U` directly; and the floor rule below, applied
-  literally, now disagrees with this bullet. Both resolved under *Sizing it*.
+  **Measured 21 October, and then tightened: the cap is 30 s.** Slowest axis
+  **17.6 s** (backrest) — see [task 1](#phase-1--bench-chair-empty) for the per-axis
+  table — so the 45 s threshold that would have forced a *raise* was nowhere near.
+  Richard's decision on the same day went the other way and set the constant to
+  **30 s**, tighter than both 90 s and the 60 s the floor rule implies. Reasoning
+  under *Sizing it*. Two corrections to this bullet, found while applying it:
+  re-sizing is **two** edits rather than one constant, because
+  `test/output_control_test.c` asserts the tick count directly; and the floor rule
+  below is superseded by the decision rather than satisfied by it, which is now
+  stated there rather than left as a contradiction.
 - **Phase 1 then tests changed firmware.** That is the better trade, and deliberately so: one bench visit instead of two, and the version Ben watches is the version that ships rather than the version it replaced. The cost is that a surprise on the bench has two candidate causes, so run the existing host regression harness to green first, and write the firmware commit into the bench notes — **`3514fef`**, unless PR #2 gains more commits before it is merged.
 
 Grounded in `DarwinInnovation/firmware_wheelberry_output_module` at `ade948d`, `Src/output_control.c` and `docs/technical-overview.md`, read rather than remembered, because the whole mode rests on this being true.
@@ -188,7 +195,9 @@ One thing found while reading: **the expiry callback toggles the channel rather 
 
 **The latch is the whole point.** Force off without it and the hub's next resend, 100 ms later, re-energises the output: a duty-cycle limiter, not a stop.
 
-**Sizing it: 90 s provisionally, per channel, refined by measurement.**
+**Sizing it: 30 s per channel, measured and decided 21 October.** Shipped at 90 s,
+now tightened. The history below is kept because the reasoning it records is what
+the decision departed from.
 
 The floor is the longest legitimate full-travel hold. Richard's recollection, 19 October, is **20 to 40 seconds** for the slowest axis; [task 1](#phase-1--bench-chair-empty) measures it properly. A cap below that cuts an ordinary hold-to-run move off mid-way, which is a fault the user feels every day, so the provisional constant carries real margin: the chair is slower loaded than empty, slower on a low battery, and a user who reaches the end of travel typically keeps holding for a second or two afterwards.
 
@@ -196,12 +205,10 @@ The ceiling is the part that is easy to get wrong in the cautious direction. **E
 
 So the cap is not a pinch guard — there is no current or stall sensing to build one from, and that stays an open hardware question in `plan.md`. What it bounds is **indefinite** energising: a stuck output that today would stay live until someone noticed. The chain that makes 90 s defensible rather than merely generous is that a runaway reaches the end of travel and stalls there, and task 13 already requires a clinician to judge each axis's *whole* configured travel safe to be left in before any timed run is permitted on it. If that judgement comes back "no" for an axis, timed runs are off for that axis and the cap is not what was protecting the user anyway.
 
-After task 1, per channel: **measured full travel × 2, rounded up to the next 10 s, never below 60 s.**
-
-**Task 1 is now measured, and the recommendation is to leave the constant at 90 s.**
-Per-axis timings are in [task 1](#phase-1--bench-chair-empty); slowest is the
-backrest at 17.6 s. Applying the rule above literally gives this, and it is where
-the two readings in this task diverge:
+The rule this task wrote for itself, to be applied after task 1, was: **measured
+full travel × 2, rounded up to the next 10 s, never below 60 s.** Per-axis timings
+are in [task 1](#phase-1--bench-chair-empty); slowest is the backrest at 17.6 s.
+Applied literally the rule gives this:
 
 | Axis | Travel | × 2 | Next 10 s | After the 60 s floor |
 | --- | --- | --- | --- | --- |
@@ -211,41 +218,67 @@ the two readings in this task diverge:
 | Footrest tilt | 17.2 s | 34.4 s | 40 s | **60 s** |
 | Footrest length | 10.6 s | 21.2 s | 30 s | **60 s** |
 
-Every channel lands on the floor, so the rule is not discriminating between
-channels here — it is restating the floor, and per-channel constants would be eight
-numbers for one value. The rule reads as a **floor to check the constant against**
-rather than a value to adopt, which is how the bullet above reads it too, and 90 s
-clears that floor by 2.6×. Three reasons to keep it rather than tighten to 60 s:
+Every channel lands on the floor, so the rule does not discriminate between
+channels here — it restates the floor, and per-channel constants would be eight
+numbers for one value.
 
-- **This is the empty chair, and loaded is the unmeasured case.** The travel × 2
-  floor holds at 90 s for any travel up to 45 s — a loaded chair up to **2.6×**
-  slower than empty. At 60 s it holds only to 1.7×. Keeping 90 s preserves the
-  agreed floor across a far wider range of the number nobody has yet taken.
-- **This task's own ceiling argument.** Energising past the end of travel does not
-  move the person; LiNX stops the axis at its configured range regardless. So
-  erring high is cheap, erring low cuts an ordinary hold-to-run move off mid-way,
-  and the cap should sit comfortably above the floor rather than snugly.
-- **The safety gain in tightening is real but small, and it is one scenario.** For a
-  runaway the two values are equivalent: the axis reaches the end of travel — 17.6 s
-  at the worst — and stalls there long before either cap fires, so they differ only
-  in how long a *stalled* actuator stays energised. The exception is the power-button
-  case in [`plan.md`](plan.md): the chair is switched off mid-move, the hub goes on
-  asserting, and the move **resumes** when the chair comes back on. The cap bounds
-  that latent-assert window, measured from the original press, so 60 s would shorten
-  it from 90 s to 60 s. Worth stating plainly rather than claiming no difference —
-  but the window still exceeds a full travel at either value, so neither value
-  prevents the resumed move from running to its end. The remedy there is the two
-  lines on the carer card and task 9, not the constant.
+**Decided 21 October: 30 s, Richard's call, against a recommendation of 90 s.**
+The options put to him were leave it at 90 s or tighten to 60 s; he chose tighter
+than either. Recorded as a decision with its consequences rather than as an
+application of the rule, because **it is not one**:
 
-Tightening to 60 s remains available and is cheap — the constant, the harness
-assertion noted above, and this paragraph — if the shorter resume window and the
-stalled-actuator cost are judged to matter more than the margin against a loaded
-chair. The natural moment to settle it is when a **loaded** travel time exists,
-because that is the number that decides whether 60 s still clears the floor; taking
-it is one more stopwatch run with someone in the chair, which phase 3 requires
-anyway. **That is Richard's call, not one to make silently in either direction**,
-and until it is made the shipped value stands at 90 s with the measurement recorded
-against it.
+- 30 s is below the rule's **never below 60 s** floor outright, and below
+  `travel × 2` for the two slowest axes (35.2 s and 34.4 s). **The rule is
+  superseded by this decision, not satisfied by it.** It was a heuristic we wrote
+  ourselves before any measurement existed; it is kept above as the reasoning the
+  decision departed from, and it should not be re-applied to re-derive 60 s.
+- What survives from the rule is its *purpose* — a cap must exceed the longest
+  legitimate full-travel hold. 30 s is **1.7× the slowest measured travel**, so an
+  ordinary hold-to-run move still completes, with about **12 s** of continued
+  holding past the end of travel to spare.
+
+**What 30 s buys.** It halves and then some the latent-assert window in the
+power-button case: the chair is switched off mid-move, the hub goes on asserting,
+and the move **resumes** when the chair comes back on. That window is measured from
+the original press and is now 30 s rather than 90 s. Note what it does *not* buy:
+30 s still exceeds a full travel at 17.6 s, so a resumed move can still run to the
+end of its travel. **The remedy there remains the two lines on the carer card and
+[task 9](#9-two-controllers-at-once-safety), not the constant** — the conclusion the
+90 s analysis reached, unchanged by tightening. For an ordinary runaway all three
+values are equivalent: the axis stalls at the end of travel long before any of them
+fires, so they differ only in how long a *stalled* actuator stays energised, and
+30 s is the best of the three on that.
+
+**What 30 s exposes, and it is the one thing to watch.** Loaded travel has never
+been measured. A loaded chair more than **1.7×** slower than empty would have a
+legitimate full-travel move cut off and latched at 30 s — a fault the user feels
+every day, and the failure mode this task's floor existed to prevent. At 90 s that
+margin was 5.1×. So the loaded stopwatch run is no longer an optional tidy-up that
+phase 3 happens to need: **it is what validates the shipped constant**, and it is
+one more run with someone in the chair. If the loaded slowest axis comes back above
+about 25 s, raise the cap rather than argue with it.
+
+**And one consequence that did not exist at 90 s: the cap is now reachable by
+ordinary bench behaviour.** At 90 s nothing in the bench script could reach it. At
+30 s, holding the backrest to its end and then keeping hold for twelve seconds —
+exactly what someone does while reading a stopwatch — latches the channel off.
+Two things follow, both cheap:
+
+- **A line in the bench notes.** If a channel stops responding mid-session, suspect
+  the cap before the hardware: release the control fully, then press again. A
+  capped channel needs an explicit release to clear its latch.
+- **[Task 16](#16-the-hub-half-of-the-cap-report) is now worth doing before the
+  bench, not after.** The hub does not read `CAP:D:<n>` / `CAP:A:<ch>`, so a capped
+  channel is indistinguishable on screen from a broken actuator or a loose cable.
+  That was tolerable while the cap was unreachable. It is now the cheapest way to
+  avoid an expensive afternoon.
+
+One interaction with the bench script worth knowing: the power-on resume test in
+[the power button section](#the-chairs-own-power-button) now has a **30-second
+observation window**. Press power mid-move with the control still held, and the
+chair must be switched back on within 30 s or the cap will have latched the channel
+off and there will be no resume to observe. Switching back on late and seeing
+nothing is the cap working, not evidence that the resume does not happen.
 
 **The `ring` accumulation worry is checked and does not apply** — verified in the hub at `73aed15`, having previously been flagged here as unverified. `SessionController._deassert` sends `A:<ch>:0:0:0` for an analogue action, which drops the enable, and `start()` awaits `stop()` before starting anything new. So two consecutive footrest moves on the shared `ring` channel are separated by a real enable-low, the cap sees a fresh OFF→ON for the second one, and it times one move rather than a session. The cap may be written against the OFF→ON transition as specified, with no special case for the analogue enables.
 
@@ -299,7 +332,9 @@ Added 21 October, and it exists because the firmware half shipped. [Task 14](#14
 
 *Fix:* the hub parses the line, stops resending into that channel, and shows that control as cut out with a plain-English reason — not an error code, and distinguishable from "can't reach the dongle". *Done when:* a capped channel says so on the screen, and the same screen says something different when the serial link is down.
 
-Small, in the same file as [task 9](#9-two-controllers-at-once-safety), and worth doing in the same pass if that pass is open. Not a gate on phase 1 or phase 2: the cap is 90 s and nothing in the bench script holds a channel that long.
+Small, in the same file as [task 9](#9-two-controllers-at-once-safety), and worth doing in the same pass if that pass is open.
+
+**Its priority went up on 21 October, when the cap was tightened to 30 s.** This said "not a gate on phase 1 or phase 2: the cap is 90 s and nothing in the bench script holds a channel that long." That is no longer true. At 30 s the cap is reachable by ordinary bench behaviour — the slowest axis is 17.6 s, so holding past the end of travel for twelve seconds latches the channel — and with nothing in the hub reading the report, a capped channel looks exactly like a broken actuator. **Do this before the bench if the hub pass is open**, and until it is done, carry the line in the bench notes: if a channel stops responding, release it fully and press again before suspecting hardware.
 
 ## Also in step 1, but not gating it
 

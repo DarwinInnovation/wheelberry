@@ -50,7 +50,7 @@ Milestones 1 to 6 are the proof of concept. Everything after milestone 6 depends
 
 **Needs first.** Milestone 1, and four things that are not a screen:
 
-- The **firmware energise cap** — a hard limit on how long any one output can stay live, built into the dongle rather than the hub ([task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet)). **Written 20 October**, awaiting review, merge and the bench.
+- The **firmware energise cap** — a hard limit on how long any one output can stay live, built into the dongle rather than the hub ([task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet)). **Written 20 October and sized at 30 s on 21 October** from the measured travel times, awaiting review, merge and the bench.
 - The **open-drain firmware change** ([task 15](step-1-tasks.md#15-the-open-drain-change-what-on-means-on-v2-hardware)), done in the same pass.
 - The **two-controller stop** in the hub ([task 9](step-1-tasks.md#9-two-controllers-at-once-safety)), so that a stop stops everyone's commands and not just your own. **Hold lifted 21 October, now being built**, and it belongs before phase 3 rather than before milestone 2.
 - **Which axes may run on a timer**, judged by Richard's seating clinician, plus a second observed session with Ben.
