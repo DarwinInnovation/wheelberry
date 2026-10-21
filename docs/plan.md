@@ -109,6 +109,8 @@ What it changes, honestly:
 
 - **It is a stop, not a reset — and that is new as of 20 October.** The dongle is powered independently of the chair, so pressing the button does not stop Wheelberry: the hub goes on asserting the output every 100 ms for as long as something is holding the control, because nothing tells it the chair has gone and there is no sensing on the dongle that could. **So the move resumes when the chair is switched back on.** It is a prediction from the design rather than something anyone has watched, and it is [on the phase 1 list](step-1-tasks.md#the-chairs-own-power-button) to confirm — but it has to be true before the card for carers is written, because the card is what will create the situation. The remedy is one more line on the card (let go, or press stop, before switching back on) and the firmware cap as the backstop beyond 90 s. It cannot be fixed in the hub.
 
+  **The 21 October travel measurement sharpens what the card has to carry.** The cap bounds how long the latent assert survives, not how far a resumed move goes: with the slowest axis at 17.6 s, a move that resumes inside the cap window completes its remaining travel in well under twenty seconds, whatever the cap is set to. So the cap is the backstop for *switching on much later*, and the line on the card is the only thing standing between a carer and a resumed move. That ordering — card first, cap second — should be how it is written.
+
 Two things to check on the bench rather than assume — the resume above, and what happens to a dongle still asserting an output into a chair that has just been powered off, which the output module's own documentation lists as untested. Both are [in phase 1](step-1-tasks.md#the-chairs-own-power-button), and both are free while the chair is already wired up.
 
 Beyond them: before any trial user sits in a moving chair, **Ben Miller-Smith** watches it move through its whole range, repeatedly, with the power pulled at random points. Not an independent safety review with a report — one afternoon, a bench, and a second pair of eyes.
@@ -257,7 +259,7 @@ Then, the same evening:
 | `bedberry`'s copy of the email address | **Left in place**, with the residual exposure stated above rather than quietly dropped |
 | **Mike cannot reliably hold a control** | Timed runs move onto milestone 2's critical path, and the chair's own switches do not substitute |
 | The firmware energise cap | A per-channel timeout **exists but is not a cap** — the bound a timed run needs is new firmware work, scoped as task 14 |
-| Full travel, slowest axis | **20 to 40 s** from recollection, which sizes task 14's cap at a provisional 90 s per channel. Phase 1 measures it |
+| Full travel, slowest axis | **20 to 40 s** from recollection, which sizes task 14's cap at a provisional 90 s per channel. Phase 1 measures it — **measured 21 October and the recollection was high; see below** |
 | Task 14 and task 9 | **Specified and held.** Planning only until phase 1 has been done on a chair |
 
 **20 October**, on Richard's feedback:
@@ -279,9 +281,20 @@ Then, the same evening:
 | v1 dongles | **None in use**, so task 15 can release freely: no compatibility flag, no build variant, nothing to preserve for push-pull |
 | The power button | **Instant, mid-travel** — and **the dongle is powered independently**, so the button stops the chair without stopping Wheelberry. A stop, not a reset |
 
+**21 October**, on Richard's bench measurement:
+
+| | Settled |
+| --- | --- |
+| **Full travel, measured, chair empty** | Elevate **10.3 s**, tilt **14.5 s**, backrest **17.6 s**, footrest tilt **17.2 s**, footrest length **10.6 s**. Five axes cover all six digital channels and the `ring` enable, so every moving channel has a number. Per-axis table and caveats in [task 1](step-1-tasks.md#phase-1--bench-chair-empty) |
+| The 20-to-40 s recollection | **High.** The slowest axis is 17.6 s, under even the bottom of the remembered range. Consistent with a correctly mapped chair configured to a narrower range than remembered, not with a mis-mapped output |
+| **The energise cap** | **Validated, unchanged at 90 s.** The threshold that would have forced a raise was a slowest axis above 45 s; 17.6 s clears the travel × 2 floor by 2.6×. Host harness re-run green at the shipped constant |
+| Tightening the cap to 60 s | **Open, and Richard's call.** The sizing rule applied literally lands every channel on its 60 s floor. Reasoning both ways, and why the loaded travel time is the number that should settle it, is in [task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet) |
+| Travel time, loaded | **Still unmeasured**, and it is the input to the decision above. One stopwatch run with someone in the chair, which phase 3 needs anyway |
+
 ## Open items
 
 - [x] **Build the firmware energise cap, and the open-drain change with it** — [task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet) and [task 15](step-1-tasks.md#15-the-open-drain-change-what-on-means-on-v2-hardware). Same file, same question, so one change and one bench visit. **Hold lifted 20 October: this is the work in flight**, ahead of phase 1. It is firmware, so it belongs in an implementation task against `firmware_wheelberry_output_module` rather than in this planning thread.
+- [ ] **Leave the energise cap at 90 s, or tighten it to 60 s?** The 21 October measurement validated the shipped constant, so this is an optional tightening rather than a fix, and it is a safety constant so it is not one to change silently. The argument both ways is in [task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet); the input that would settle it is a **loaded** travel time, which nobody has taken. Two edits and a harness run whenever it is decided.
 - [ ] **Lift task 9's hold, or leave it?** [Task 9](step-1-tasks.md#9-two-controllers-at-once-safety), the two-controller stop, lives in the hub repository and was not named when the firmware hold was lifted, so it is being left held. It is a precondition for phase 3 — before Richard sits in a chair Wheelberry moves — rather than for phase 1, so there is time, but not much.
 - [ ] **Our own voice skill, or Home Assistant's cloud?** The remaining half of the voice decision, and the one that decides whether Darwin Innovation holds personal data during the proof of concept at all. Ours works for everyone and fits the existing Alexa work; Nabu Casa needs no endpoint, no account linking and no data of ours, but only serves users who have Home Assistant.
 - [ ] **A DPIA scoped to the voice route**, before milestone 4 — the account link and the cloud endpoint, not the seating log. Brought forward by the cloud-first decision; the controller analysis in [`background/audit-retention.md`](background/audit-retention.md) is the part that comes out of the parked pile.

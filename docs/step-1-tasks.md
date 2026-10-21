@@ -29,6 +29,37 @@ So step 1 is **verify it on a chair, then close the gaps**. Not weeks of buildin
 Nobody in the chair. Wheels off the ground or the chair on blocks.
 
 1. **Axis mapping, and how long a full travel takes.** Drive all six outputs; check each one moves the axis its name claims, in the direction its icon claims. **Time each axis end to end while you are there** — it is free now and it is the number [task 14](#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet) has to be set above, because a cap shorter than a legitimate full-travel hold would cut ordinary hold-to-run off mid-move. **Expect 20 to 40 seconds for the slowest axis** — that is recollection, not measurement, and it is written here so the measurement has something to disagree with: a time well outside that range is more likely a mis-mapped output or a chair configured differently than a surprising actuator. *Done when:* `config.yaml`'s action names match the physical axes, verified one at a time, anything mislabelled is fixed in config rather than remembered, and there is a travel time written down per axis. Note that the footrest and the toggles are **analogue** actions on the shared `ring` channel, not digital outputs — the cap has to cover those two enables as well as the six digital channels.
+
+   **Measured, 21 October — the travel-time half of this task is done.** Richard, end to end, chair empty:
+
+   | Axis | Travel | Channels it drives |
+   | --- | --- | --- |
+   | Elevate | **10.3 s** | digital 5 / 6 (`seat_up`, `seat_down`) |
+   | Tilt | **14.5 s** | digital 1 / 2 (`tilt_forward`, `tilt_backward`) |
+   | Backrest | **17.6 s** | digital 3 / 4 (`backrest_forward`, `backrest_backward`) |
+   | Footrest tilt | **17.2 s** | analogue `ring` (`footrest_tilt_up` / `_down`) |
+   | Footrest length | **10.6 s** | analogue `ring` (`footrest_extend`, `footrest_retract`) |
+
+   Five axes cover **every moving channel**: all six digital outputs and the `ring`
+   enable. The other `ring` actions (`horn`, `rest_toggle`, `light_toggle`,
+   `function_prev`, `function_next`) and `tip` (`power`) are momentary presses with
+   no travel, so there is no travel time to take and the cap is nowhere near them.
+
+   **The recollection was high, and wrong in the safe direction.** 20 to 40 s was
+   written here so the measurement had something to disagree with; the slowest axis
+   is **17.6 s**, below even the bottom of that range. Taken with task 5 — the LiNX
+   range is in force and Wheelberry cannot exceed it — a slowest axis under 20 s is
+   consistent with correctly mapped outputs on a chair configured to a narrower
+   range than remembered, not with a mis-mapped output. What it changes is
+   [task 14](#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet)'s
+   sizing, recorded there.
+
+   **Two things this measurement is not**, both of which the cap's margin absorbs:
+   it is one number per axis rather than per direction (down is gravity-assisted and
+   should be the faster of the two), and it is the empty chair, which is the faster
+   case. **Still open from this task:** the axis-mapping half — each output moving
+   the axis its name claims, in the direction its icon claims, verified one at a
+   time — is not recorded as confirmed by the timings alone.
 2. **The failsafe, broken seven ways, each mid-move.** Release the button; switch browser tab; put the phone in flight mode; pull the USB cable; `kill -9` the server; pull power from the Pi; **press the chair's own LiNX power button.** *Done when:* every one of the seven stops the axis, and each result is written down — including any that stop slower than expected. The seventh is a confirmation rather than a question — Richard confirms it is instant — and it continues into the power-on test below, which is the part nobody has done.
 3. **Measure the stop, once.** Video at 60 fps is enough: frames from release to axis stationary. *Done when:* there is a number on paper to compare against the 300 ms watchdog. One measurement, not a programme — but an assumed number is not evidence.
 4. **The chair's own switch.** One chair button, through the input module, triggering one action. *Done when:* it fires reliably, and the 4 s default LOW hold is tuned to something a person can actually do on purpose but not by accident.
@@ -118,6 +149,15 @@ Added 19 October, on the answer to task 13's first item. **This is firmware work
 Two consequences of building before the bench rather than after it:
 
 - **The cap ships unmeasured.** 90 s stands as the shipped constant and task 1's measurement validates it rather than setting it. Re-sizing afterwards is one constant and a re-run of the host harness. The single outcome that needs action is a slowest axis above 45 s, which would put 90 s below the travel × 2 floor below — raise the constant before anyone relies on the cap.
+
+  **Measured 21 October: the cap is validated and nothing needs to change.** Slowest
+  axis **17.6 s** (backrest), against the 45 s threshold that would have forced a
+  raise — see [task 1](#phase-1--bench-chair-empty) for the per-axis table. 90 s is
+  5.1× the slowest travel and 2.6× the travel × 2 floor. Two corrections to this
+  bullet, found while applying it: re-sizing is **two** edits rather than one
+  constant, because `test/output_control_test.c` asserts
+  `ENERGISE_CAP_TICKS == 9000U` directly; and the floor rule below, applied
+  literally, now disagrees with this bullet. Both resolved under *Sizing it*.
 - **Phase 1 then tests changed firmware.** That is the better trade, and deliberately so: one bench visit instead of two, and the version Ben watches is the version that ships rather than the version it replaced. The cost is that a surprise on the bench has two candidate causes, so run the existing host regression harness to green first, and write the firmware commit into the bench notes.
 
 Grounded in `DarwinInnovation/firmware_wheelberry_output_module` at `ade948d`, `Src/output_control.c` and `docs/technical-overview.md`, read rather than remembered, because the whole mode rests on this being true.
@@ -153,6 +193,55 @@ The ceiling is the part that is easy to get wrong in the cautious direction. **E
 So the cap is not a pinch guard — there is no current or stall sensing to build one from, and that stays an open hardware question in `plan.md`. What it bounds is **indefinite** energising: a stuck output that today would stay live until someone noticed. The chain that makes 90 s defensible rather than merely generous is that a runaway reaches the end of travel and stalls there, and task 13 already requires a clinician to judge each axis's *whole* configured travel safe to be left in before any timed run is permitted on it. If that judgement comes back "no" for an axis, timed runs are off for that axis and the cap is not what was protecting the user anyway.
 
 After task 1, per channel: **measured full travel × 2, rounded up to the next 10 s, never below 60 s.**
+
+**Task 1 is now measured, and the recommendation is to leave the constant at 90 s.**
+Per-axis timings are in [task 1](#phase-1--bench-chair-empty); slowest is the
+backrest at 17.6 s. Applying the rule above literally gives this, and it is where
+the two readings in this task diverge:
+
+| Axis | Travel | × 2 | Next 10 s | After the 60 s floor |
+| --- | --- | --- | --- | --- |
+| Elevate | 10.3 s | 20.6 s | 30 s | **60 s** |
+| Tilt | 14.5 s | 29.0 s | 30 s | **60 s** |
+| Backrest | 17.6 s | 35.2 s | 40 s | **60 s** |
+| Footrest tilt | 17.2 s | 34.4 s | 40 s | **60 s** |
+| Footrest length | 10.6 s | 21.2 s | 30 s | **60 s** |
+
+Every channel lands on the floor, so the rule is not discriminating between
+channels here — it is restating the floor, and per-channel constants would be eight
+numbers for one value. The rule reads as a **floor to check the constant against**
+rather than a value to adopt, which is how the bullet above reads it too, and 90 s
+clears that floor by 2.6×. Three reasons to keep it rather than tighten to 60 s:
+
+- **This is the empty chair, and loaded is the unmeasured case.** The travel × 2
+  floor holds at 90 s for any travel up to 45 s — a loaded chair up to **2.6×**
+  slower than empty. At 60 s it holds only to 1.7×. Keeping 90 s preserves the
+  agreed floor across a far wider range of the number nobody has yet taken.
+- **This task's own ceiling argument.** Energising past the end of travel does not
+  move the person; LiNX stops the axis at its configured range regardless. So
+  erring high is cheap, erring low cuts an ordinary hold-to-run move off mid-way,
+  and the cap should sit comfortably above the floor rather than snugly.
+- **The safety gain in tightening is real but small, and it is one scenario.** For a
+  runaway the two values are equivalent: the axis reaches the end of travel — 17.6 s
+  at the worst — and stalls there long before either cap fires, so they differ only
+  in how long a *stalled* actuator stays energised. The exception is the power-button
+  case in [`plan.md`](plan.md): the chair is switched off mid-move, the hub goes on
+  asserting, and the move **resumes** when the chair comes back on. The cap bounds
+  that latent-assert window, measured from the original press, so 60 s would shorten
+  it from 90 s to 60 s. Worth stating plainly rather than claiming no difference —
+  but the window still exceeds a full travel at either value, so neither value
+  prevents the resumed move from running to its end. The remedy there is the two
+  lines on the carer card and task 9, not the constant.
+
+Tightening to 60 s remains available and is cheap — the constant, the harness
+assertion noted above, and this paragraph — if the shorter resume window and the
+stalled-actuator cost are judged to matter more than the margin against a loaded
+chair. The natural moment to settle it is when a **loaded** travel time exists,
+because that is the number that decides whether 60 s still clears the floor; taking
+it is one more stopwatch run with someone in the chair, which phase 3 requires
+anyway. **That is Richard's call, not one to make silently in either direction**,
+and until it is made the shipped value stands at 90 s with the measurement recorded
+against it.
 
 **The `ring` accumulation worry is checked and does not apply** — verified in the hub at `73aed15`, having previously been flagged here as unverified. `SessionController._deassert` sends `A:<ch>:0:0:0` for an analogue action, which drops the enable, and `start()` awaits `stop()` before starting anything new. So two consecutive footrest moves on the shared `ring` channel are separated by a real enable-low, the cap sees a fresh OFF→ON for the second one, and it times one move rather than a session. The cap may be written against the OFF→ON transition as specified, with no special case for the analogue enables.
 
