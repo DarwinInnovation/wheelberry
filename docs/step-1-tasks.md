@@ -171,7 +171,7 @@ Two consequences of building before the bench rather than after it:
   nothing checks; and the floor rule below is superseded by the decision rather
   than satisfied by it, which is now stated there rather than left as a
   contradiction.
-- **Phase 1 then tests changed firmware.** That is the better trade, and deliberately so: one bench visit instead of two, and the version Ben watches is the version that ships rather than the version it replaced. The cost is that a surprise on the bench has two candidate causes, so run the existing host regression harness to green first, and write the firmware commit into the bench notes — **`3514fef`**, unless PR #2 gains more commits before it is merged.
+- **Phase 1 then tests changed firmware.** That is the better trade, and deliberately so: one bench visit instead of two, and the version Ben watches is the version that ships rather than the version it replaced. The cost is that a surprise on the bench has two candidate causes, so run the existing host regression harness to green first, and write the firmware commit into the bench notes — **`8e2c19a`** as of 21 October, which is `3514fef` plus the 30 s cap and its five statements of the value. It will move again if [tasks 17 and 18](#17-the-cap-report-is-the-first-thing-the-module-says-unasked) land before the merge, so take the hash on the day rather than from here.
 
 Grounded in `DarwinInnovation/firmware_wheelberry_output_module` at `ade948d`, `Src/output_control.c` and `docs/technical-overview.md`, read rather than remembered, because the whole mode rests on this being true.
 
@@ -337,6 +337,45 @@ Added 21 October, and it exists because the firmware half shipped. [Task 14](#14
 Small, in the same file as [task 9](#9-two-controllers-at-once-safety), and worth doing in the same pass if that pass is open. **Folded into it, 21 October, while that pass was still open** — one change to `server.py`, one review, and the feedback lands before the constant it reports on reaches a bench. It is not a separate piece of work any more and does not need its own task.
 
 **Its priority went up on 21 October, when the cap was tightened to 30 s.** This said "not a gate on phase 1 or phase 2: the cap is 90 s and nothing in the bench script holds a channel that long." That is no longer true. At 30 s the cap is reachable by ordinary bench behaviour — the slowest axis is 17.6 s, so holding past the end of travel for twelve seconds latches the channel — and with nothing in the hub reading the report, a capped channel looks exactly like a broken actuator. **Do this before the bench if the hub pass is open**, and until it is done, carry the line in the bench notes: if a channel stops responding, release it fully and press again before suspecting hardware.
+
+### 17. The cap report is the first thing the module says unasked
+
+Raised by GitHub Copilot's review of PR #2 on 20 October, read against the code on 21 October rather than taken on trust. **It is a real defect**, and the design point underneath it is bigger than the symptom.
+
+The symptom: all eight channels can latch in the same 10 ms tick and enqueue eight `CAP:` reports before `response_poll()` next runs. The response queue in `Src/ux_device_cdc_acm.c` has eight slots, and a response holds its slot until a poll observes the USB transfer complete — so with one ordinary reply still occupying a slot, the next report finds the queue full, and `USBD_CDC_ACM_Respond` answers a full queue with `Error_Handler()`.
+
+Two corrections to the framing, both found by checking:
+
+- **Eight reports on their own fit exactly** — the capacity test is `response_count == RESPONSE_DEPTH` *before* the write, so eight go in. The real condition is *(reports landing in one tick) + (slots already occupied) > 8*, and the queue drains roughly one per tick. Six digital channels latching together with three replies queued does it as surely as eight with one.
+- **It fails in the safe direction, but not to a safe place.** `Error_Handler` runs `output_control_fault_stop`, which releases every channel — and then the module is dead until it is power-cycled. Fail-safe, not fail-available, and from the user's seat indistinguishable from an unplugged dongle. The release in `timer_cb_cap` happens *before* the report, so a channel is never left energised by this; it is the announcement that kills the module, not the stop.
+
+**It is not reachable from today's hub.** `SessionController` runs one action at a time, and the bench script paces commands 50 ms apart, so its six asserts are five ticks apart and their caps expire five ticks apart — well inside the drain rate. The trigger needs a host that asserts six to eight channels inside one tick. That is not what we send today, which is exactly why it is worth fixing: the cap exists to bound a host nobody is trusting, and this is the cap's own reporting path depending on the host behaving.
+
+**The design point.** Before this pass, every line the module sent was a reply — one per command — so the host's own pacing bounded the queue, and "overflow means `Error_Handler`" was an assertion about *host* behaviour. `test_response_capacity_and_halt` asserts that halt as correct, deliberately. The cap report is the firmware's first **unsolicited** output, so queue occupancy stops being the host's to control and that policy has to be re-decided rather than inherited.
+
+*Fix:* a report must never be able to reach `Error_Handler` — reserve capacity for the burst, or drop and coalesce reports under pressure. A latch that cannot be announced is still a latch; the status query reports it, and task 16's hub half can recover the state from that.
+
+*Done when:* the harness has the regression Copilot asked for — a reply already queued, then all eight channels expiring with no poll between callbacks. Its observation that the current test polls after each expiry is correct, and is why the existing group passes.
+
+### 18. The bench script's cleanup energises all six outputs
+
+Found while verifying task 17, in the same PR's files. In `test/test_digital_outputs.py`, the `finally` block of `run_random_test` — the path a Ctrl-C takes — reads:
+
+```python
+# Leave the module in a known-safe state.
+for ch in digital_channels:
+    set_digital(ser, ch, 1, 0)
+```
+
+`value=1` is an assert and `revert_ms=0` means no failsafe timeout. **The comment says safe and the code energises all six digital channels indefinitely.** The analogue lines below it are right; the digital loop is not.
+
+**Pre-existing at `ade948d`, not introduced by PR #2** — which is what makes it worth writing down rather than just fixing. It is v1 vocabulary in the one file the open-drain pass did not re-read: on push-pull hardware, driving the inactive level was a real action and `1` could plausibly have been the parked state, and on v2 the inactive state is a release and `0` is the only spelling of it. That is precisely the class of defect Richard identified in point 4 of the 20 October feedback, surviving in a test script because the pass went looking for it in the firmware.
+
+What has saved us so far is that the script has probably never been run with a chair attached, and — since 20 October — that the cap would latch each channel 30 s later. On the bench with the chair connected, Ctrl-ing out of a random run would command six seating outputs at once.
+
+*Fix:* one character per line, `1` → `0`, and the docstring saying the cleanup releases. *Done when:* a Ctrl-C out of `--mode random` leaves the status line reading all dots, checked on the bench. Until then, the bench notes carry it: after any Ctrl-C, send `?` and confirm `D:......` before touching anything else.
+
+**Tasks 17 and 18 are one pass**, both in PR #2's own files, before it merges. Neither is a chair-side change and neither needs a bench.
 
 ## Also in step 1, but not gating it
 
