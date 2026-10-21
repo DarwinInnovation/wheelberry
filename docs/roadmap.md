@@ -1,6 +1,6 @@
 # Wheelberry: the development path
 
-20 October 2026. The milestones, in order, in plain English.
+20 October 2026, amended 21 October. The milestones, in order, in plain English.
 
 This is the companion to [`plan.md`](plan.md). The plan says *what we are proving and why*; this says *what gets built, in what order, and how you will know each one is finished*. If the two ever disagree, the plan wins on intent and this wins on sequence.
 
@@ -34,7 +34,7 @@ Milestones 1 to 6 are the proof of concept. Everything after milestone 6 depends
 
 **Needs first.** Nothing from us. **This is mostly already built** — the existing Python hub does all of the above today, so milestone 1 is verification on a real chair plus a short list of gaps. The work is listed as phases 1 to 3 of [`step-1-tasks.md`](step-1-tasks.md). It is gated by one afternoon with Ben Miller-Smith watching, which is the gate on anyone sitting in a chair that Wheelberry moves.
 
-**One thing goes in ahead of it**, decided 20 October: the firmware pass, [tasks 14 and 15](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet). So phase 1 and Ben's afternoon exercise the firmware that will actually ship, rather than the version it replaces — one bench visit instead of two.
+**One thing goes in ahead of it**, decided 20 October: the firmware pass, [tasks 14 and 15](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet). So phase 1 and Ben's afternoon exercise the firmware that will actually ship, rather than the version it replaces — one bench visit instead of two. **It is written**: branch `energise-cap-and-open-drain`, commit `3514fef`, host harness green, open as PR #2 and not merged, not flashed.
 
 ---
 
@@ -50,9 +50,9 @@ Milestones 1 to 6 are the proof of concept. Everything after milestone 6 depends
 
 **Needs first.** Milestone 1, and four things that are not a screen:
 
-- The **firmware energise cap** — a hard limit on how long any one output can stay live, built into the dongle rather than the hub ([task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet)). **Started**, as of 20 October, ahead of milestone 1.
-- The **open-drain firmware change** ([task 15](step-1-tasks.md#15-the-open-drain-change-what-on-means-on-v2-hardware)), in the same pass.
-- The **two-controller stop** in the hub ([task 9](step-1-tasks.md#9-two-controllers-at-once-safety)), so that a stop stops everyone's commands and not just your own. **Still held**, and it belongs before phase 3 rather than before milestone 2.
+- The **firmware energise cap** — a hard limit on how long any one output can stay live, built into the dongle rather than the hub ([task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet)). **Written 20 October**, awaiting review, merge and the bench.
+- The **open-drain firmware change** ([task 15](step-1-tasks.md#15-the-open-drain-change-what-on-means-on-v2-hardware)), done in the same pass.
+- The **two-controller stop** in the hub ([task 9](step-1-tasks.md#9-two-controllers-at-once-safety)), so that a stop stops everyone's commands and not just your own. **Hold lifted 21 October, now being built**, and it belongs before phase 3 rather than before milestone 2.
 - **Which axes may run on a timer**, judged by Richard's seating clinician, plus a second observed session with Ben.
 
 **This is the longest of the six**, and the one where the safety work actually is. The single thing still unknown is what Mike *can* use — dwell, scanning, a switch tap — because the measured time it takes him to stop a run is what sets how long a run is allowed to be.
@@ -83,16 +83,21 @@ Milestones 1 to 6 are the proof of concept. Everything after milestone 6 depends
 
 **Done when.** A trial user turns at least two devices on and off by voice on their first attempt, using their own words — and a request to move the chair **fails loudly rather than silently**, with the user left in no doubt that Wheelberry will not do it.
 
-**Needs first.** Milestone 3, and **the hub passcode** ([task 10](step-1-tasks.md#10-a-passcode-now-before-milestone-4-not-milestone-6)), which moved here from milestone 6 for the reason below.
+**Needs first.** Milestone 3, **the hub passcode** ([task 10](step-1-tasks.md#10-a-passcode-now-before-milestone-4-not-milestone-6)), and — settled 21 October — **a cloud service of our own**: an endpoint outside the house, an account link, and a skill through somebody else's certification queue.
 
-**The path is decided: a cloud assistant first — Alexa or Google — not an on-hub recogniser.** Richard's decision, 20 October: least work, it reaches hardware people already own, and there is an existing Alexa skill to draw on. It also means voice-driven seating stays at milestone 7, because only a recogniser inside the house could ever carry a stop.
+**The path is decided: a cloud assistant first — Alexa or Google — not an on-hub recogniser.** Richard's decision, 20 October: least work, it reaches hardware people already own, and there is existing Alexa work to draw on. It also means voice-driven seating stays at milestone 7, because only a recogniser inside the house could ever carry a stop.
 
-Two consequences, and the first one costs something:
+**And it is our own skill and endpoint, not Home Assistant's cloud.** Richard's decision, 21 October. Nabu Casa would have needed no endpoint, no account linking and no data of ours — but it only reaches users who already run Home Assistant, which is precisely the install milestone 3 goes out of its way to support, and it would leave the existing Alexa work unused. So the "we hold nothing" answer ends at milestone 4, deliberately and with the price known.
 
-- **A cloud assistant needs a route from the internet into the home.** Everything up to milestone 3 runs entirely on the home network, which is why "cloud and remote access" was an *out* item and why the honest answer to "what do you keep about me?" was "nothing — we never have it". An assistant is invoked by Amazon's or Google's servers, so milestone 4 brings an endpoint outside the house, account linking between their account and this hub, and **the first personal data Darwin Innovation holds.** The plan put that trigger after the proof of concept; this decision brings it inside it. It does not change the decision — it means milestone 4 is the first milestone with a data-protection step in it, and the controller analysis in [`background/audit-retention.md`](background/audit-retention.md) comes out of the parked pile when it starts. Nothing else in that document does.
-- **The refusal stops being ours to word.** The chair is not exposed to the assistant at all, which is already the rule for Home Assistant — so a user who says "tilt me back" gets "I can't find a device called chair" from Amazon, in Amazon's words, which is a refusal delivered by somebody else badly. A custom skill keeps the wording ours; a smart-home skill does not. That is a reason to prefer a custom skill, and until it is settled the done-when above asks for *no silent failure* rather than naming who speaks.
+Three consequences:
 
-**One question inside the decision, still open:** our own skill, or ride on Home Assistant's cloud? Nabu Casa already gives HA users Alexa and Google with no cloud code, no endpoint and no account linking of ours — the "we hold nothing" answer survives intact. But it only works where the user has Home Assistant, which cuts against the HA-free install that milestone 3 deliberately supports. Our own skill works for everyone and is where the existing Alexa work fits. It is in [Open questions](#open-questions), and it changes what milestone 4 *is*.
+- **Darwin Innovation becomes a data controller, inside the proof of concept.** No longer a maybe. The data is small and nameable: the email address and display name the assistant account gives us, its provider ID, and **the mapping from that account to one hub** — which *is* the account link, the thing that makes "turn the light off" reach this house and not another one. A DPIA scoped to that is an open item, and the controller analysis in [`background/audit-retention.md`](background/audit-retention.md) is the part of the parked work that comes back. Nothing else in it does.
+- **The refusal is only half ours, and which half depends on the skill type** — the one piece of the voice decision still open, below. The chair is not exposed to the assistant at all, so under a smart-home skill "tilt me back" comes back as Amazon's "I can't find a device called chair", which is indistinguishable from a broken setup and invites the user to try harder. A custom skill keeps every word ours and costs an invocation name in every sentence. Until that is settled the done-when asks for *no silent failure* rather than naming who speaks.
+- **Voice is the one part of Wheelberry a stranger cannot self-host by cloning it.** A cloud skill needs a developer account, a published skill and a reachable endpoint; a smart-home skill also needs an AWS Lambda, which is how Home Assistant's own cloud-free Alexa setup works. So an external builder either uses our service or stands up their own. Everything else in this project is "here is the parts list"; this part is not, and the README should say so rather than let somebody find out.
+
+**Most of the plumbing already exists, in the parked monorepo.** `apps/proxy` in the public `wheelberry` repository is a cloud Alexa proxy: devices in the home connect **outbound** over Socket.IO, so nothing has to be opened into the house; Login with Amazon and Google identify the user against a whitelist; device tokens are stored hashed. That is milestone 4's architecture, already written — the one piece of parked *code* this decision brings back. What is not reusable is its skill model, for the reason in [milestone 7](#beyond-the-proof-of-concept).
+
+**The one thing still open is the skill type:** a smart-home skill, where the user says "Alexa, turn the bedroom light off" and the phrasing is Amazon's, or a custom skill, where they say "Alexa, tell Wheelberry to turn the bedroom light off" and every word including the refusal is ours. It is in [Open questions](#open-questions). Milestone 4's done-when — two devices, first attempt, their own words — leans towards smart-home; the loud refusal leans towards custom; shipping both is possible and is two submissions.
 
 ---
 
@@ -138,6 +143,8 @@ Everything below is a destination, conditional on milestone 6 coming back "yes".
 | 10 | **The carer and clinician portal** | In the mission from the start. Needs accounts, roles and remote access — and the moment remote access exists, the data-protection work parked in [`background/audit-retention.md`](background/audit-retention.md) becomes live |
 | 11 | **Sold, or offered to care providers** | The regulatory gate. See the regulatory section of [`plan.md`](plan.md#regulatory-and-data-protection--noted) |
 
+**Milestone 7 has already been built once, and that is the clearest argument for why it is milestone 7.** The parked Alexa skill in `apps/proxy/cfg/skills/wheelchair.json` is a custom skill called "wheel berry" whose intents are `tilt {direction} for {seconds} seconds`, `recline …`, `lift …`, `leg tilt …`, `leg length …` and "switch chair off". That is voice-commanded **timed seating movement**, spoken to Amazon, routed through a cloud proxy, executed on a chair — and it has no stop intent, no presence check and no cap, because the firmware cap only exists as of 20 October. As one person's own tool on their own chair that was a choice they were entitled to make. It is not what gets offered to somebody else, and milestone 7 is therefore not "point the old skill at the new hub".
+
 ---
 
 ## Adding a new system: the shape every integration takes
@@ -177,6 +184,8 @@ Two consequences worth knowing now:
 
 These change the order above, so they are worth answering before milestone 3 finishes rather than during milestone 4.
 
-- [ ] **Our own skill, or Home Assistant's cloud?** The one part of the voice decision still open, and it decides whether Darwin Innovation ends up holding personal data during the proof of concept or not. See [milestone 4](#milestone-4--ask-for-it-out-loud).
+- [x] ~~Our own skill, or Home Assistant's cloud?~~ **Ours, decided 21 October.** See [milestone 4](#milestone-4--ask-for-it-out-loud).
+- [ ] **A smart-home skill, a custom skill, or both?** What is left of the voice decision. It sets the words a user has to say and who writes the refusal, and a smart-home skill adds a Lambda. See [milestone 4](#milestone-4--ask-for-it-out-loud).
+- [ ] **Is the old Alexa route still live on Richard's chair?** If it is, there is a cloud path that can move that chair today, which is not what "no cloud before milestone 4" describes. It needs an answer and, if yes, a decommissioning before the new hub goes in next to it.
 - [ ] **What input method does Mike actually use?** The slowest unknown in the project. It sets the stop time, which sets the run-time cap, which sizes milestone 2.
 - [ ] **Who recruits trial users, and through whom?** Starts now, in parallel, because other people's time is the long lead item.

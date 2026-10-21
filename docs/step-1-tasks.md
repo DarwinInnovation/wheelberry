@@ -1,8 +1,8 @@
 # Step 1: the hub drives the chair
 
-19 October 2026, amended 20 October. The task list for the first milestone of [`plan.md`](plan.md), as work rather than as a milestone.
+19 October 2026, amended 20 and 21 October. The task list for the first milestone of [`plan.md`](plan.md), as work rather than as a milestone.
 
-**On numbering:** the four "steps" became six milestones on 20 October, in [`roadmap.md`](roadmap.md). This list is [milestone 1](roadmap.md#milestone-1--the-chair-moves-from-a-phone); where it says "step 2" it means milestone 2, and where it says "step 4" it means milestone 6, the month in the home. Task numbers 1–15 are unchanged and are referred to from elsewhere, so they stay as they are.
+**On numbering:** the four "steps" became six milestones on 20 October, in [`roadmap.md`](roadmap.md). This list is [milestone 1](roadmap.md#milestone-1--the-chair-moves-from-a-phone); where it says "step 2" it means milestone 2, and where it says "step 4" it means milestone 6, the month in the home. Task numbers 1–16 are unchanged and are referred to from elsewhere, so they stay as they are.
 
 Grounded in the actual code: `DarwinInnovation/wheelberry_dongle_http_test_site` at `73aed15` (8 October 2026), its `README.md` and `docs/test_server_tech_overview.md`. Read before this list was written, which is why the list is shorter than expected.
 
@@ -104,6 +104,8 @@ What still holds: the firmware watchdog, the chair's own controls, and pulling t
 
 *Fix:* one active controller at a time with explicit takeover, and a stop that cancels every session's resend task, not just the caller's. A single owner variable in the server. *Done when:* two phones, one holding, the other pressing stop — and the chair stops.
 
+**The hold is lifted: 21 October, build it.** Richard's decision, after the firmware pass. It is in `wheelberry_dongle_http_test_site` and it is a precondition for phase 3 — before Richard sits in a chair Wheelberry moves — so it has time but not much. One thing to settle while in that file rather than after it: **what "explicit takeover" looks like to the person holding the control that is about to be taken.** A silent handover is a chair that stops responding to the hand that is on it, which is worse than the bug being fixed; so ownership changes on a deliberate action, the loser is told, and whoever is holding at the time gets a release rather than a stall.
+
 Two things raise its priority since it was written. It is now a **precondition for timed runs** (task 13), because a run nobody is holding makes "a stop that cancels every resend task" the whole safety story rather than a second line of defence. And it is the same bug class as a timed run that over-runs: in both cases the hub is streaming commands that no human is asking for, which is precisely what the firmware watchdog cannot see. A maximum continuous energise time in the output module would close both at once, from outside the hub — [task 14](#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet), which does not exist in the firmware yet and has to be built.
 
 ### 10. A passcode (now before milestone 4, not milestone 6)
@@ -144,7 +146,9 @@ The conditions are in [`plan.md`](plan.md#timed-runs-and-what-they-cost). The wo
 
 Added 19 October, on the answer to task 13's first item. **This is firmware work and it needs no chair and no clinician** — which makes it, with task 9, the only work in the project not waiting on a person.
 
-**The hold is lifted: 20 October, build it now, ahead of phase 1**, in one pass with [task 15](#15-the-open-drain-change-what-on-means-on-v2-hardware). It needs an implementation task against `firmware_wheelberry_output_module`; a planning task cannot write it. **Task 9 was not named in that decision and stays held** — it is in the hub repository, and it is a precondition for phase 3 rather than for phase 1, so the two can be lifted separately.
+**The hold is lifted: 20 October, build it now, ahead of phase 1**, in one pass with [task 15](#15-the-open-drain-change-what-on-means-on-v2-hardware). It needs an implementation task against `firmware_wheelberry_output_module`; a planning task cannot write it.
+
+**And it is written.** Branch `energise-cap-and-open-drain`, commit `3514fef` on top of `ade948d`, open as **PR #2** in the firmware repository, host regression harness green across thirteen groups — and verified by mutation: seven deliberately broken variants each fail the harness, so the new tests bite rather than merely pass. **Not merged, and nothing flashed onto a chair.** The latch is reported on the serial link as `CAP:D:<n>` / `CAP:A:<ch>`; the hub half of that is [task 16](#16-the-hub-half-of-the-cap-report). The heading above is now historical — the bound exists. **Task 9's hold was lifted separately on 21 October** and it is being built in the hub repository.
 
 Two consequences of building before the bench rather than after it:
 
@@ -158,7 +162,7 @@ Two consequences of building before the bench rather than after it:
   constant, because `test/output_control_test.c` asserts
   `ENERGISE_CAP_TICKS == 9000U` directly; and the floor rule below, applied
   literally, now disagrees with this bullet. Both resolved under *Sizing it*.
-- **Phase 1 then tests changed firmware.** That is the better trade, and deliberately so: one bench visit instead of two, and the version Ben watches is the version that ships rather than the version it replaced. The cost is that a surprise on the bench has two candidate causes, so run the existing host regression harness to green first, and write the firmware commit into the bench notes.
+- **Phase 1 then tests changed firmware.** That is the better trade, and deliberately so: one bench visit instead of two, and the version Ben watches is the version that ships rather than the version it replaced. The cost is that a surprise on the bench has two candidate causes, so run the existing host regression harness to green first, and write the firmware commit into the bench notes — **`3514fef`**, unless PR #2 gains more commits before it is merged.
 
 Grounded in `DarwinInnovation/firmware_wheelberry_output_module` at `ade948d`, `Src/output_control.c` and `docs/technical-overview.md`, read rather than remembered, because the whole mode rests on this being true.
 
@@ -285,7 +289,17 @@ So the documented failsafe is true by luck rather than by construction, and the 
 
 *Done when:* the host regression harness proves that a timeout on a **released** channel leaves it released (the case that is currently wrong), that a timeout on an asserted channel releases it (the case that currently works by accident), and that fault stop, disconnect and cap latch all land in the same release path. Then once on the bench, with the status query confirming the channel reads as inactive.
 
+**Built in the same pass as task 14**, in PR #2 at `3514fef`: `logical_val` became `asserted`, `apply_digital`/`apply_analog` became `assert_digital`/`assert_analog`, both timeout callbacks release instead of negating, and `m` is now ignored on a release because there is nothing left to time. The prize landed — one `release_channel()` and one `release_all()` with five callers: failsafe timeout, cap latch, release command, disconnect, and `output_control_fault_stop`, which stays free of RTOS and DAC calls so that it still runs before RTOS init. Two judgement calls in it worth a reviewer's eye, both documented in the firmware's overview: a release ignores its `m` field rather than arming a no-op timer, and a release no longer writes the DAC, so an isolated analogue channel still reports its retained millivolts in the status line.
+
 **The v1 question is closed: confirmed 20 October, no v1 dongles are in use anywhere.** So releasing instead of driving the inactive level breaks nothing in the field, and the change needs no compatibility flag, no build variant and no migration — there is no push-pull behaviour left to preserve. That was the only thing gating the merge.
+
+### 16. The hub half of the cap report
+
+Added 21 October, and it exists because the firmware half shipped. [Task 14](#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet) required that the latch be *reported* rather than silent, and `3514fef` does report it: `CAP:D:<n>` or `CAP:A:<ch>` on the serial link when a channel latches off. **Nothing in the hub reads it.** So today the cap firing still looks to the user exactly like a broken actuator — they hold the button, the resend loop carries on, and nothing on the screen changes.
+
+*Fix:* the hub parses the line, stops resending into that channel, and shows that control as cut out with a plain-English reason — not an error code, and distinguishable from "can't reach the dongle". *Done when:* a capped channel says so on the screen, and the same screen says something different when the serial link is down.
+
+Small, in the same file as [task 9](#9-two-controllers-at-once-safety), and worth doing in the same pass if that pass is open. Not a gate on phase 1 or phase 2: the cap is 90 s and nothing in the bench script holds a channel that long.
 
 ## Also in step 1, but not gating it
 
