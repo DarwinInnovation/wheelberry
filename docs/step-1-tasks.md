@@ -165,10 +165,12 @@ Two consequences of building before the bench rather than after it:
   Richard's decision on the same day went the other way and set the constant to
   **30 s**, tighter than both 90 s and the 60 s the floor rule implies. Reasoning
   under *Sizing it*. Two corrections to this bullet, found while applying it:
-  re-sizing is **two** edits rather than one constant, because
-  `test/output_control_test.c` asserts the tick count directly; and the floor rule
-  below is superseded by the decision rather than satisfied by it, which is now
-  stated there rather than left as a contradiction.
+  re-sizing is **five** edits rather than one constant — the harness asserts the
+  tick count directly, and the firmware README, two places in its technical
+  overview and the hardware test script's docstring each state the value as prose
+  nothing checks; and the floor rule below is superseded by the decision rather
+  than satisfied by it, which is now stated there rather than left as a
+  contradiction.
 - **Phase 1 then tests changed firmware.** That is the better trade, and deliberately so: one bench visit instead of two, and the version Ben watches is the version that ships rather than the version it replaced. The cost is that a surprise on the bench has two candidate causes, so run the existing host regression harness to green first, and write the firmware commit into the bench notes — **`3514fef`**, unless PR #2 gains more commits before it is merged.
 
 Grounded in `DarwinInnovation/firmware_wheelberry_output_module` at `ade948d`, `Src/output_control.c` and `docs/technical-overview.md`, read rather than remembered, because the whole mode rests on this being true.
@@ -332,7 +334,7 @@ Added 21 October, and it exists because the firmware half shipped. [Task 14](#14
 
 *Fix:* the hub parses the line, stops resending into that channel, and shows that control as cut out with a plain-English reason — not an error code, and distinguishable from "can't reach the dongle". *Done when:* a capped channel says so on the screen, and the same screen says something different when the serial link is down.
 
-Small, in the same file as [task 9](#9-two-controllers-at-once-safety), and worth doing in the same pass if that pass is open.
+Small, in the same file as [task 9](#9-two-controllers-at-once-safety), and worth doing in the same pass if that pass is open. **Folded into it, 21 October, while that pass was still open** — one change to `server.py`, one review, and the feedback lands before the constant it reports on reaches a bench. It is not a separate piece of work any more and does not need its own task.
 
 **Its priority went up on 21 October, when the cap was tightened to 30 s.** This said "not a gate on phase 1 or phase 2: the cap is 90 s and nothing in the bench script holds a channel that long." That is no longer true. At 30 s the cap is reachable by ordinary bench behaviour — the slowest axis is 17.6 s, so holding past the end of travel for twelve seconds latches the channel — and with nothing in the hub reading the report, a capped channel looks exactly like a broken actuator. **Do this before the bench if the hub pass is open**, and until it is done, carry the line in the bench notes: if a channel stops responding, release it fully and press again before suspecting hardware.
 
