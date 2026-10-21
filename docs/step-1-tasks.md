@@ -377,6 +377,8 @@ What has saved us so far is that the script has probably never been run with a c
 
 **Tasks 17 and 18 are one pass**, both in PR #2's own files, before it merges. Neither is a chair-side change and neither needs a bench.
 
+**Decided 21 October: both are fixed before PR #2 merges**, and the triage is posted on the PR rather than only here — a confirmed review finding is worth more next to the code than in a planning document, and a reviewer reading PR #2 needs to know its own bench script has an unsafe cleanup. The pass is **[DAR-10](/DAR/issues/DAR-10)**, on PR #2's existing `energise-cap-and-open-drain` branch so it lands inside that PR instead of a second one. Copilot's review thread stays unresolved until the fix lands. Two things settled while writing the task up: task 18's file is **already one of PR #2's five changed files** (its docstring states the 30 s cap), so it is a change to a file the PR owns; and task 17's fix has a judgement call in it — reserve capacity for the burst, or drop and coalesce under pressure — which the implementer picks and states in the PR, with `test_response_capacity_and_halt` updated rather than deleted so the change of policy is visible in the diff.
+
 ## Also in step 1, but not gating it
 
 - **A fresh Pi to a working hub, written down**: dialout group, venv, config, systemd unit, and a name on the network the user can type instead of an IP address. *Done when:* done twice from scratch, the second time by someone else following only the document.
