@@ -34,7 +34,9 @@ Milestones 1 to 6 are the proof of concept. Everything after milestone 6 depends
 
 **Needs first.** Nothing from us. **This is mostly already built** — the existing Python hub does all of the above today, so milestone 1 is verification on a real chair plus a short list of gaps. The work is listed as phases 1 to 3 of [`step-1-tasks.md`](step-1-tasks.md). It is gated by one afternoon with Ben Miller-Smith watching, which is the gate on anyone sitting in a chair that Wheelberry moves.
 
-**One thing goes in ahead of it**, decided 20 October: the firmware pass, [tasks 14 and 15](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet). So phase 1 and Ben's afternoon exercise the firmware that will actually ship, rather than the version it replaces — one bench visit instead of two. **It is written**: branch `energise-cap-and-open-drain`, commit `3514fef`, host harness green, open as PR #2 and not merged, not flashed.
+**One thing goes in ahead of it**, decided 20 October: the firmware pass, [tasks 14 and 15](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet). So phase 1 and Ben's afternoon exercise the firmware that will actually ship, rather than the version it replaces — one bench visit instead of two. **It is written**: branch `energise-cap-and-open-drain`, head **`e76ce34`**, host harness green, both review findings fixed — open as PR #2, **not merged, not flashed**. Its merge waits on Richard's review and nothing else.
+
+**And the hub half is merged**, 22 October: tasks 9 and 16, the two-controller stop and the screen's reading of the firmware's cut-out report, so the on-screen stop safety rule 5 asks for exists for the first time. Update the Pi to hub `main` *before* flashing the firmware — a module that reports a cut-out to an older hub is reporting it to something that does not read the link.
 
 ---
 
@@ -52,7 +54,7 @@ Milestones 1 to 6 are the proof of concept. Everything after milestone 6 depends
 
 - The **firmware energise cap** — a hard limit on how long any one output can stay live, built into the dongle rather than the hub ([task 14](step-1-tasks.md#14-the-firmware-energise-cap-the-bound-that-does-not-exist-yet)). **Written 20 October and sized at 30 s on 21 October** from the measured travel times, awaiting review, merge and the bench.
 - The **open-drain firmware change** ([task 15](step-1-tasks.md#15-the-open-drain-change-what-on-means-on-v2-hardware)), done in the same pass.
-- The **two-controller stop** in the hub ([task 9](step-1-tasks.md#9-two-controllers-at-once-safety)), so that a stop stops everyone's commands and not just your own. **Hold lifted 21 October, now being built**, and it belongs before phase 3 rather than before milestone 2.
+- The **two-controller stop** in the hub ([task 9](step-1-tasks.md#9-two-controllers-at-once-safety)), so that a stop stops everyone's commands and not just your own. **Done: merged 22 October**, along with the hub half of the cut-out report. This one is off the list.
 - **Which axes may run on a timer**, judged by Richard's seating clinician, plus a second observed session with Ben.
 
 **This is the longest of the six**, and the one where the safety work actually is. The single thing still unknown is what Mike *can* use — dwell, scanning, a switch tap — because the measured time it takes him to stop a run is what sets how long a run is allowed to be.
